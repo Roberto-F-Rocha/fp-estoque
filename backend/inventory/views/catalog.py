@@ -23,6 +23,7 @@ class UserViewSet(BaseViewSet):
     search_fields = ["username", "email", "first_name", "last_name", "inventory_profile__full_name", "inventory_profile__cpf"]
     filterset_fields = ["is_active", "inventory_profile__role", "inventory_profile__active"]
     ordering_fields = ["username", "date_joined", "last_login"]
+    ordering = ["username"]
 
     @action(detail=False, methods=["get"], permission_classes=[IsInventoryUser])
     def me(self, request):
