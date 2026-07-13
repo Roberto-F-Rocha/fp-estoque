@@ -9,10 +9,11 @@ from ..validators import validate_cpf
 
 User = get_user_model()
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ["full_name", "cpf", "phone", "position", "role", "active", "created_at", "updated_at"]
+        fields = ["full_name", "cpf", "phone", "role", "active", "created_at", "updated_at"]
         read_only_fields = ["created_at", "updated_at"]
 
     def validate_cpf(self, value):
@@ -25,7 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(write_only=True, required=False)
     cpf = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     phone = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    position = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(write_only=True, required=False, choices=UserProfile.ROLES)
     profile_active = serializers.BooleanField(write_only=True, required=False)
 
@@ -45,7 +45,6 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name",
             "cpf",
             "phone",
-            "position",
             "role",
             "profile_active",
         ]
@@ -60,7 +59,6 @@ class UserSerializer(serializers.ModelSerializer):
             "full_name": validated_data.pop("full_name", "").strip(),
             "cpf": validated_data.pop("cpf", None) or None,
             "phone": validated_data.pop("phone", ""),
-            "position": validated_data.pop("position", ""),
             "role": validated_data.pop("role", UserProfile.OPERATOR),
             "active": validated_data.pop("profile_active", True),
         }
@@ -116,5 +114,3 @@ class MeSerializer(UserSerializer):
             "can_cancel_movements": role == UserProfile.ADMIN,
             "can_conclude_inventory": role == UserProfile.ADMIN,
         }
-
-
