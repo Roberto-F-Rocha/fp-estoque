@@ -48,6 +48,16 @@ class UserCreationTests(TestCase):
         self.assertEqual(user.inventory_profile.position, "")
         self.assertNotIn("position", response.data["profile"])
 
+    def test_user_list_uses_valid_user_ordering(self):
+        User.objects.create_user("z-operador", password="OperadorNovo123!")
+        User.objects.create_user("a-operador", password="OperadorNovo123!")
+
+        response = self.client.get("/api/users/?page=1")
+
+        self.assertEqual(response.status_code, 200, response.data)
+        usernames = [item["username"] for item in response.data["results"]]
+        self.assertEqual(usernames, sorted(usernames))
+
     def test_user_creation_returns_password_validation_message(self):
         response = self.client.post(
             "/api/users/",
