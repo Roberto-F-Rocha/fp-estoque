@@ -3,6 +3,7 @@
   .summary-cards { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .form-grid.cols-4 { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .dashboard-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .dashboard-filter-grid-stock { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 1050px) {
   .shell, .sidebar-collapsed { grid-template-columns: 1fr; }
@@ -34,9 +35,11 @@
   .modal-backdrop { padding: 0; align-items: end; }
   .modal, .modal-lg, .modal-xl { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
   .summary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dashboard-view-switch { grid-template-columns: 1fr; gap: 10px; }
+  .dashboard-view-option { padding: 14px; }
   .dashboard-filter-heading { flex-direction: column; }
   .dashboard-filter-heading .btn { width: 100%; }
-  .dashboard-filter-grid { grid-template-columns: 1fr; }
+  .dashboard-filter-grid, .dashboard-filter-grid-stock { grid-template-columns: 1fr; }
   .dashboard-scope { align-items: flex-start; }
   .dashboard-scope small { width: 100%; margin-left: 0; }
   .dashboard-help { padding: 14px; }
@@ -56,6 +59,9 @@
   .user-chip > div { width: 34px; height: 34px; }
   .dashboard-filter-panel { padding: 16px; }
   .dashboard-section-heading h3 { font-size: 18px; }
+  .dashboard-view-option { align-items: flex-start; }
+  .dashboard-view-icon { width: 42px; height: 42px; flex-basis: 42px; }
+  .dashboard-view-option strong { font-size: 16px; }
   .login-card { border-radius: 16px; padding: 20px 17px; gap: 14px; }
   .logo-mark { width: 46px; height: 46px; flex-basis: 46px; }
   .brand strong { font-size: 15px; }
