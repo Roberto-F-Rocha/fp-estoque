@@ -1,7 +1,56 @@
-import React,{useEffect,useState} from 'react';import{createRoot}from'react-dom/client';import axios from'axios';import{LayoutDashboard,Package,ArrowDownToLine,ArrowUpFromLine,FileText,LogOut}from'lucide-react';import'./styles.css';
-const api=axios.create({baseURL:import.meta.env.VITE_API_URL||'http://localhost:8000/api/'});api.interceptors.request.use(c=>{const t=localStorage.getItem('access');if(t)c.headers.Authorization=`Bearer ${t}`;return c});
-function Login({onLogin}){const[u,setU]=useState('admin'),[p,setP]=useState('admin'),[e,setE]=useState('');async function submit(x){x.preventDefault();try{const r=await api.post('auth/login/',{username:u,password:p});localStorage.setItem('access',r.data.access);localStorage.setItem('refresh',r.data.refresh);onLogin()}catch{setE('Usuário ou senha inválidos.')}}return <main className="login"><form onSubmit={submit} className="card login-card"><div className="brand"><div className="logo">FP</div><div><b>FP Estoque</b><small>Depósito de Bebidas</small></div></div><h1>Acesse o sistema</h1><label>Usuário<input value={u} onChange={x=>setU(x.target.value)}/></label><label>Senha<input type="password" value={p} onChange={x=>setP(x.target.value)}/></label>{e&&<p className="error">{e}</p>}<button>Entrar</button></form></main>}
-function App(){const[logged,setLogged]=useState(!!localStorage.getItem('access'));const[page,setPage]=useState('dashboard');const[data,setData]=useState(null);const[products,setProducts]=useState([]);const[mov,setMov]=useState({product:'',type:'IN',quantity:1,reason:''});async function load(){if(!logged)return;const[d,p]=await Promise.all([api.get('dashboard/'),api.get('products/?page_size=100')]);setData(d.data);setProducts(p.data.results||p.data)}useEffect(()=>{load().catch(()=>setLogged(false))},[logged]);async function addMovement(e){e.preventDefault();await api.post('movements/',mov);setMov({product:'',type:'IN',quantity:1,reason:''});await load();alert('Movimentação registrada com sucesso.')}function logout(){localStorage.clear();setLogged(false)}if(!logged)return <Login onLogin={()=>setLogged(true)}/>;return <div className="app"><aside><div className="brand"><div className="logo">FP</div><b>FP Estoque</b></div>{[['dashboard',LayoutDashboard,'Dashboard'],['products',Package,'Produtos'],['movement',ArrowDownToLine,'Movimentar'],['report',FileText,'Relatório diário']].map(([id,I,t])=><button className={page===id?'active':''} onClick={()=>setPage(id)}><I size={18}/>{t}</button>)}<button onClick={logout}><LogOut size={18}/>Sair</button></aside><section><header><h1>{page==='dashboard'?'Visão geral':page==='products'?'Produtos':page==='movement'?'Entrada / saída':'Relatório diário'}</h1></header>{page==='dashboard'&&data&&<><div className="grid">{[['Produtos',data.products],['Itens em estoque',data.stock_items],['Estoque baixo',data.low_stock],['Sem estoque',data.out_of_stock],['Valor do estoque',`R$ ${Number(data.inventory_value).toFixed(2)}`]].map(x=><div className="card metric"><small>{x[0]}</small><strong>{x[1]}</strong></div>)}</div><div className="card"><h2>Últimas movimentações</h2><Table rows={data.recent}/></div></>}{page==='products'&&<div className="card"><h2>Produtos cadastrados</h2><table><thead><tr><th>Código</th><th>Produto</th><th>Estoque</th><th>Mínimo</th><th>Custo</th></tr></thead><tbody>{products.map(p=><tr><td>{p.code}</td><td>{p.name}</td><td>{p.stock}</td><td>{p.minimum_stock}</td><td>R$ {p.cost_price}</td></tr>)}</tbody></table><p className="hint">Cadastros completos também estão disponíveis pela API e pelo Django Admin.</p></div>}{page==='movement'&&<form className="card form" onSubmit={addMovement}><label>Produto<select required value={mov.product} onChange={e=>setMov({...mov,product:e.target.value})}><option value="">Selecione</option>{products.map(p=><option value={p.id}>{p.name} — estoque {p.stock}</option>)}</select></label><label>Tipo<select value={mov.type} onChange={e=>setMov({...mov,type:e.target.value})}><option value="IN">Entrada</option><option value="OUT">Saída</option><option value="ADJ+">Ajuste positivo</option><option value="ADJ-">Ajuste negativo</option></select></label><label>Quantidade<input type="number" min="0.001" step="0.001" value={mov.quantity} onChange={e=>setMov({...mov,quantity:e.target.value})}/></label><label>Motivo<input value={mov.reason} onChange={e=>setMov({...mov,reason:e.target.value})}/></label><button>Confirmar movimentação</button></form>}{page==='report'&&<Report/>}</section></div>}
-function Table({rows}){return <table><thead><tr><th>Data</th><th>Produto</th><th>Tipo</th><th>Quantidade</th><th>Responsável</th></tr></thead><tbody>{rows.map(r=><tr><td>{new Date(r.created_at).toLocaleString('pt-BR')}</td><td>{r.product_name}</td><td>{r.type}</td><td>{r.quantity}</td><td>{r.user_name}</td></tr>)}</tbody></table>}
-function Report(){const[d,setD]=useState(new Date().toISOString().slice(0,10));async function download(){const r=await api.get(`reports/daily.pdf?date=${d}`,{responseType:'blob'});const u=URL.createObjectURL(r.data),a=document.createElement('a');a.href=u;a.download=`relatorio-estoque-${d}.pdf`;a.click();URL.revokeObjectURL(u)}return <div className="card form"><label>Data do relatório<input type="date" value={d} onChange={e=>setD(e.target.value)}/></label><button onClick={download}>Gerar relatório em PDF</button><p className="hint">Você pode selecionar o dia atual ou qualquer data anterior.</p></div>}
-createRoot(document.getElementById('root')).render(<App/>);
+import React, { useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { api, EmptyState, Logo, RefreshCw, Toast, unwrap } from "./shared.jsx";
+import { Login } from "./auth.jsx";
+import { Shell } from "./layout.jsx";
+import { DashboardPage } from "./pages/dashboard.jsx";
+import { ProductsPage } from "./pages/products.jsx";
+import { SuppliersPage } from "./pages/suppliers.jsx";
+import { CategoriesPage } from "./pages/categories.jsx";
+import { DocumentPage } from "./pages/documents.jsx";
+import { LotsPage } from "./pages/lots.jsx";
+import { MovementsPage } from "./pages/movements.jsx";
+import { AdjustmentsPage } from "./pages/adjustments.jsx";
+import { InventoriesPage } from "./pages/inventories.jsx";
+import { AlertsPage } from "./pages/alerts.jsx";
+import { ReportsPage } from "./pages/reports.jsx";
+import { UsersPage } from "./pages/users.jsx";
+import { SettingsPage } from "./pages/settings.jsx";
+
+function App() {
+  const [logged, setLogged] = useState(Boolean(localStorage.getItem("fp_access")));
+  const [me, setMe] = useState(null);
+  const [page, setPage] = useState("dashboard");
+  const [toast, setToast] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const notify = (message, type = "success") => setToast({ message, type });
+  async function loadMe() {
+    try {
+      const [user, notices] = await Promise.all([api.get("users/me/"), api.get("notifications/?page_size=30")]);
+      setMe(user.data); setNotifications(unwrap(notices.data));
+    } catch { setLogged(false); localStorage.removeItem("fp_access"); localStorage.removeItem("fp_refresh"); }
+  }
+  useEffect(() => { if (logged) loadMe(); }, [logged]);
+  function logout() { localStorage.removeItem("fp_access"); localStorage.removeItem("fp_refresh"); setLogged(false); setMe(null); }
+  if (!logged) return <Login onLogin={() => setLogged(true)} />;
+  if (!me) return <div className="app-loading"><Logo /><RefreshCw className="spin" /> Carregando sistema...</div>;
+  const pages = {
+    dashboard: <DashboardPage />,
+    products: <ProductsPage notify={notify} me={me} />,
+    categories: <CategoriesPage notify={notify} me={me} />,
+    suppliers: <SuppliersPage notify={notify} me={me} />,
+    entries: <DocumentPage type="entries" notify={notify} me={me} />,
+    outputs: <DocumentPage type="outputs" notify={notify} me={me} />,
+    lots: <LotsPage />,
+    movements: <MovementsPage me={me} notify={notify} />,
+    adjustments: <AdjustmentsPage notify={notify} />,
+    inventories: <InventoriesPage me={me} notify={notify} />,
+    alerts: <AlertsPage me={me} notify={notify} />,
+    reports: <ReportsPage notify={notify} />,
+    users: <UsersPage notify={notify} />,
+    settings: <SettingsPage notify={notify} />,
+  };
+  return <><Shell me={me} page={page} setPage={setPage} onLogout={logout} notifications={notifications} onRefreshNotifications={loadMe}>{pages[page] || <EmptyState title="Página não encontrada" text="Selecione uma opção no menu." />}</Shell><Toast toast={toast} onClose={() => setToast(null)} /></>;
+}
+
+createRoot(document.getElementById("root")).render(<React.StrictMode><App /></React.StrictMode>);

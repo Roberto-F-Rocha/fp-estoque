@@ -1,0 +1,41 @@
+@media (max-width: 1400px) {
+  .metrics-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .summary-cards { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .form-grid.cols-4 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+}
+@media (max-width: 1050px) {
+  .shell, .sidebar-collapsed { grid-template-columns: 1fr; }
+  .sidebar, .sidebar-collapsed .sidebar { width: 248px; transform: translateX(-100%); }
+  .sidebar.mobile-open { transform: translateX(0); }
+  .content { grid-column: 1; }
+  .mobile-menu { display: grid; }
+  .sidebar-collapse { display: none; }
+  .mobile-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 25; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .item-row { grid-template-columns: minmax(220px,2fr) repeat(3,minmax(130px,1fr)) 40px; }
+}
+@media (max-width: 720px) {
+  .page-container { padding: 15px; }
+  .topbar { padding: 0 14px; }
+  .topbar-title small, .user-chip span { display: none; }
+  .page-header { flex-direction: column; }
+  .page-actions { width: 100%; justify-content: flex-start; }
+  .page-actions .btn { flex: 1; }
+  .metrics-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .metric-card { min-height: 90px; padding: 12px; }
+  .metric-card strong { font-size: 18px; }
+  .form-grid.cols-2, .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: 1fr; }
+  .filters-bar > *, .search-box { min-width: 100% !important; width: 100%; }
+  .modal-backdrop { padding: 0; align-items: end; }
+  .modal, .modal-lg, .modal-xl { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
+  .summary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .login-card { padding: 24px 20px; }
+  .login-heading h1 { font-size: 26px; }
+  .item-row { grid-template-columns: 1fr; }
+  .item-row .icon-btn { justify-self: end; }
+}
+@media (max-width: 460px) {
+  .metrics-grid, .summary-cards { grid-template-columns: 1fr; }
+  .user-chip > div { width: 34px; height: 34px; }
+}
