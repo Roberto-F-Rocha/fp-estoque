@@ -50,11 +50,11 @@ small.block { display: block; color: var(--muted); margin-top: 3px; }
 .login-page {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(300px, 500px) minmax(360px, 430px);
+  grid-template-columns: minmax(480px, 590px) minmax(390px, 460px);
   align-items: center;
   justify-content: center;
-  gap: clamp(40px, 6vw, 96px);
-  padding: clamp(28px, 4vw, 56px);
+  gap: clamp(52px, 5vw, 92px);
+  padding: clamp(28px, 4vw, 64px);
   background: #101010;
   position: relative;
   overflow: hidden;
@@ -78,20 +78,21 @@ small.block { display: block; color: var(--muted); margin-top: 3px; }
 }
 .login-showcase img {
   display: block;
-  width: min(100%, 440px);
-  max-height: min(66vh, 520px);
+  width: clamp(470px, 31vw, 590px);
+  max-width: 100%;
+  max-height: min(74vh, 650px);
   aspect-ratio: 1;
   object-fit: contain;
-  filter: drop-shadow(0 24px 45px rgba(0,0,0,.42));
+  filter: drop-shadow(0 28px 55px rgba(0,0,0,.48));
   animation: logo-enter .55s ease both;
 }
 .login-card {
   position: relative;
   z-index: 2;
-  width: min(430px, 100%);
+  width: min(460px, 100%);
   background: #fff;
   border-radius: 20px;
-  padding: 30px;
+  padding: 34px;
   box-shadow: 0 24px 80px rgba(0,0,0,.35);
   display: grid;
   gap: 17px;
@@ -99,7 +100,7 @@ small.block { display: block; color: var(--muted); margin-top: 3px; }
 .login-card .brand { display: none; }
 .login-heading { margin-top: 4px; }
 .login-heading p { color: var(--muted); margin: 0 0 4px; }
-.login-heading h1 { font-size: 30px; margin: 0; }
+.login-heading h1 { font-size: 32px; margin: 0; }
 .password-input { position: relative; }
 .password-input input { padding-right: 46px; }
 .password-input button { position: absolute; right: 5px; top: 5px; width: 34px; height: 34px; border: 0; background: transparent; display: grid; place-items: center; color: #555; }
