@@ -1,19 +1,20 @@
 import { React, useEffect, useMemo, useState, api, unwrap, fmtMoney, fmtQty, fmtDate, today, getError, Logo, Button, Modal, Toast, Field, EmptyState, Pagination, DataTable, StatusBadge, AlertTriangle, Archive, ArrowDownToLine, ArrowUpFromLine, BarChart3, Bell, Boxes, Check, ChevronDown, CircleDollarSign, ClipboardCheck, Eye, EyeOff, FileDown, FileText, Gauge, History, Layers3, LogOut, Menu, Package, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, SlidersHorizontal, Trash2, Truck, UserCog, Users, Warehouse, X, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "./shared.jsx";
+
 const menuItems = [
-  ["dashboard", Gauge, "Dashboard"],
-  ["products", Package, "Produtos"],
-  ["categories", Layers3, "Categorias"],
-  ["suppliers", Truck, "Fornecedores"],
-  ["entries", ArrowDownToLine, "Entradas"],
-  ["outputs", ArrowUpFromLine, "Saídas"],
-  ["lots", Boxes, "Lotes e validade"],
-  ["movements", History, "Movimentações"],
-  ["adjustments", SlidersHorizontal, "Ajustes", "admin"],
-  ["inventories", ClipboardCheck, "Inventários"],
-  ["alerts", AlertTriangle, "Alertas"],
-  ["reports", FileText, "Relatórios"],
-  ["users", Users, "Usuários", "admin"],
-  ["settings", Settings, "Configurações", "admin"],
+  ["dashboard", Gauge, "Dashboard", null, "Controle interno • dados em tempo real"],
+  ["products", Package, "Produtos", null, "Cadastre, consulte e mantenha o catálogo do estoque."],
+  ["categories", Layers3, "Categorias", null, "Organize os produtos por grupos."],
+  ["suppliers", Truck, "Fornecedores", null, "Dados cadastrais, contatos e histórico de recebimentos."],
+  ["entries", ArrowDownToLine, "Entradas", null, "Recebimentos com lotes, validade, custos e nota fiscal."],
+  ["outputs", ArrowUpFromLine, "Saídas", null, "Retiradas internas com controle FEFO e bloqueio de estoque negativo."],
+  ["lots", Boxes, "Lotes e validade", null, "Quantidades disponíveis por lote com alertas de vencimento e regra FEFO."],
+  ["movements", History, "Movimentações", null, "Registro imutável para auditoria, com correções feitas por estorno."],
+  ["adjustments", SlidersHorizontal, "Ajustes", "admin", "Correções autorizadas com justificativa obrigatória e histórico auditável."],
+  ["inventories", ClipboardCheck, "Inventários", null, "Conte os produtos, identifique sobras e faltas e gere os ajustes com rastreabilidade."],
+  ["alerts", AlertTriangle, "Alertas", null, "Estoque mínimo, falta de produtos, validade e divergências."],
+  ["reports", FileText, "Relatórios", null, "Visualize os dados reais do banco antes de exportar em PDF ou CSV."],
+  ["users", Users, "Usuários", "admin", "Cadastre usuários e defina diretamente o perfil de acesso de cada pessoa."],
+  ["settings", Settings, "Configurações", "admin", "Parâmetros administrativos do estoque e dos alertas."],
 ];
 
 export function Shell({ me, page, setPage, onLogout, children, notifications, onRefreshNotifications }) {
@@ -21,6 +22,8 @@ export function Shell({ me, page, setPage, onLogout, children, notifications, on
   const [collapsed, setCollapsed] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const visibleItems = menuItems.filter((item) => item[3] !== "admin" || me?.permissions?.is_admin);
+  const currentPage = menuItems.find(([id]) => id === page);
+
   return (
     <div className={`shell ${collapsed ? "sidebar-collapsed" : ""}`}>
       <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
@@ -42,8 +45,8 @@ export function Shell({ me, page, setPage, onLogout, children, notifications, on
         <header className="topbar">
           <button className="icon-btn mobile-menu" onClick={() => setMobileOpen(true)}><Menu size={22} /></button>
           <div className="topbar-title">
-            <h1>{menuItems.find(([id]) => id === page)?.[2] || "FP Estoque"}</h1>
-            <small>Controle interno • dados em tempo real</small>
+            <h1>{currentPage?.[2] || "FP Estoque"}</h1>
+            {currentPage?.[4] && <small>{currentPage[4]}</small>}
           </div>
           <div className="topbar-actions">
             <div className="notification-wrap">
@@ -76,10 +79,10 @@ export function Shell({ me, page, setPage, onLogout, children, notifications, on
   );
 }
 
-export function PageHeader({ title, description, actions }) {
+export function PageHeader({ actions }) {
+  if (!actions) return null;
   return (
-    <div className="page-header">
-      <div><h2>{title}</h2><p>{description}</p></div>
+    <div className="page-header page-header-actions-only">
       <div className="page-actions">{actions}</div>
     </div>
   );
