@@ -21,7 +21,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = UserProfileSerializer(source="inventory_profile")
+    profile = UserProfileSerializer(source="inventory_profile", read_only=True)
     password = serializers.CharField(write_only=True, required=False, allow_blank=False)
     full_name = serializers.CharField(write_only=True, required=False)
     cpf = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
