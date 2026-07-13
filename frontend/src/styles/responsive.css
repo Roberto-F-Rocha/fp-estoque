@@ -2,6 +2,7 @@
   .metrics-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .summary-cards { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .form-grid.cols-4 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .dashboard-filter-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
 }
 @media (max-width: 1050px) {
   .shell, .sidebar-collapsed { grid-template-columns: 1fr; }
@@ -12,6 +13,7 @@
   .sidebar-collapse { display: none; }
   .mobile-overlay { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 25; }
   .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .form-grid.cols-3, .form-grid.cols-4 { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .item-row { grid-template-columns: minmax(220px,2fr) repeat(3,minmax(130px,1fr)) 40px; }
   .login-page { grid-template-columns: minmax(250px, 340px) minmax(340px, 420px); gap: 28px; padding: 26px; }
@@ -32,6 +34,14 @@
   .modal-backdrop { padding: 0; align-items: end; }
   .modal, .modal-lg, .modal-xl { width: 100%; max-height: 94vh; border-radius: 18px 18px 0 0; }
   .summary-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .dashboard-filter-heading { flex-direction: column; }
+  .dashboard-filter-heading .btn { width: 100%; }
+  .dashboard-filter-grid { grid-template-columns: 1fr; }
+  .dashboard-scope { align-items: flex-start; }
+  .dashboard-scope small { width: 100%; margin-left: 0; }
+  .dashboard-help { padding: 14px; }
+  .dashboard-panel-title { flex-direction: column; }
+  .dashboard-panel-title > small { margin-left: 0; }
   .login-page { display: grid; grid-template-columns: 1fr; place-items: center; padding: 20px 16px; overflow-y: auto; }
   .login-showcase { display: none; }
   .login-card { padding: 24px 20px; width: min(430px, 100%); }
@@ -44,6 +54,8 @@
 @media (max-width: 460px) {
   .metrics-grid, .summary-cards { grid-template-columns: 1fr; }
   .user-chip > div { width: 34px; height: 34px; }
+  .dashboard-filter-panel { padding: 16px; }
+  .dashboard-section-heading h3 { font-size: 18px; }
   .login-card { border-radius: 16px; padding: 20px 17px; gap: 14px; }
   .logo-mark { width: 46px; height: 46px; flex-basis: 46px; }
   .brand strong { font-size: 15px; }
