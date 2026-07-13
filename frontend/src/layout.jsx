@@ -12,7 +12,7 @@ const menuItems = [
   ["adjustments", SlidersHorizontal, "Ajustes", "admin", "Correções autorizadas com justificativa obrigatória e histórico auditável."],
   ["inventories", ClipboardCheck, "Inventários", null, "Conte os produtos, identifique sobras e faltas e gere os ajustes com rastreabilidade."],
   ["alerts", AlertTriangle, "Alertas", null, "Estoque mínimo, falta de produtos, validade e divergências."],
-  ["reports", FileText, "Relatórios", null, "Visualize os dados reais do banco antes de exportar em PDF ou CSV."],
+  ["reports", FileText, "Relatórios", null, "Visualize os dados reais do banco antes de exportar em PDF ou Excel (XLSX)."],
   ["users", Users, "Usuários", "admin", "Cadastre usuários e defina diretamente o perfil de acesso de cada pessoa."],
   ["settings", Settings, "Configurações", "admin", "Parâmetros administrativos do estoque e dos alertas."],
 ];
