@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">FP Depósito de Bebidas</title>
+  <desc id="desc">Emblema circular preto, branco e dourado do FP Depósito de Bebidas</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffd24a"/>
+      <stop offset=".55" stop-color="#f5b400"/>
+      <stop offset="1" stop-color="#d89400"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <circle cx="256" cy="256" r="203" fill="#111" stroke="#fff" stroke-width="9"/>
+    <circle cx="256" cy="256" r="190" fill="none" stroke="#111" stroke-width="7"/>
+    <circle cx="256" cy="256" r="181" fill="none" stroke="#fff" stroke-width="4"/>
+  </g>
+  <g fill="url(#gold)">
+    <path d="M87 377c-27-42-43-91-44-141 0-56 18-109 49-151l13 13c-27 38-43 86-43 138 1 47 15 92 40 131z"/>
+    <path d="M425 377c27-42 43-91 44-141 0-56-18-109-49-151l-13 13c27 38 43 86 43 138-1 47-15 92-40 131z"/>
+    <g transform="translate(0 2)">
+      <path d="M86 113l31-22-11 37zM67 146l35-17-17 35zM54 181l38-10-24 31zM48 219l39-3-29 27zM50 258l39 5-33 20zM59 297l37 12-35 14zM74 334l34 18-37 7zM96 368l29 24-37-1zM119 399l24 29-36-8z"/>
+      <g transform="translate(512 0) scale(-1 1)"><path d="M86 113l31-22-11 37zM67 146l35-17-17 35zM54 181l38-10-24 31zM48 219l39-3-29 27zM50 258l39 5-33 20zM59 297l37 12-35 14zM74 334l34 18-37 7zM96 368l29 24-37-1zM119 399l24 29-36-8z"/></g>
+    </g>
+  </g>
+  <text x="256" y="111" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="800">2024</text>
+  <g fill="url(#gold)">
+    <path d="M213 128l7 14 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>
+    <path d="M256 120l8 17 19 2-14 13 4 19-17-9-17 9 4-19-14-13 19-2z"/>
+    <path d="M299 128l7 14 16 2-12 11 3 16-14-8-14 8 3-16-12-11 16-2z"/>
+  </g>
+  <text x="256" y="261" text-anchor="middle" fill="#fff" font-family="Georgia, 'Times New Roman', serif" font-size="108" font-weight="800" letter-spacing="-8">FP</text>
+  <text x="256" y="303" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="2">DEPÓSITO DE BEBIDAS</text>
+  <g transform="translate(256 374)">
+    <g transform="translate(-58 -40) rotate(-18)">
+      <rect x="-28" y="-40" width="58" height="94" rx="10" fill="url(#gold)" stroke="#fff" stroke-width="5"/>
+      <path d="M-28-21h58v12c-8-2-12 8-20 3-8-5-13 6-21 2-8-4-9-9-17-5z" fill="#fff"/>
+      <path d="M30-18c26-7 31 10 24 27-5 13-15 24-27 28" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(58 -40) rotate(18)">
+      <rect x="-30" y="-40" width="58" height="94" rx="10" fill="url(#gold)" stroke="#fff" stroke-width="5"/>
+      <path d="M-30-21h58v12c-8-2-12 8-20 3-8-5-13 6-21 2-8-4-9-9-17-5z" fill="#fff"/>
+      <path d="M-30-18c-26-7-31 10-24 27 5 13 15 24 27 28" fill="none" stroke="url(#gold)" stroke-width="10" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>
