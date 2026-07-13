@@ -150,7 +150,9 @@ class InventoryCount(NumberedDocument):
         return self
 
     def conclude(self, user):
-        if self.status != self.WAITING:
+        if self.status == self.OPEN:
+            self.submit(user)
+        elif self.status != self.WAITING:
             raise ValidationError(
                 "O inventário precisa estar aguardando confirmação para ser concluído."
             )
@@ -227,7 +229,7 @@ class InventoryItem(TimeStamped):
     )
     system_quantity = models.DecimalField(max_digits=14, decimal_places=3)
     counted_quantity = models.DecimalField(max_digits=14, decimal_places=3)
-    counted = models.BooleanField(default=False)
+    counted = models.BooleanField(default=True)
     counted_at = models.DateTimeField(null=True, blank=True)
     counted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
