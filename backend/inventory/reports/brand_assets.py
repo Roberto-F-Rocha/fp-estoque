@@ -4,6 +4,7 @@ from pathlib import Path
 from django.conf import settings
 from reportlab.graphics.shapes import Circle, Drawing, Path as GraphicPath, Polygon, Rect, String
 from reportlab.lib.colors import HexColor, white
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Image
 
 
@@ -16,7 +17,15 @@ def _find_png_logo():
         Path(settings.BASE_DIR).parent / "frontend" / "public" / "fp-logo.png",
         Path(settings.BASE_DIR) / "inventory" / "assets" / "fp-logo.png",
     ]
-    return next((path for path in candidates if path.is_file()), None)
+    for path in candidates:
+        if not path.is_file():
+            continue
+        try:
+            ImageReader(str(path)).getSize()
+            return path
+        except Exception:
+            continue
+    return None
 
 
 def _star_points(cx, cy, outer_radius, inner_radius):
@@ -51,12 +60,18 @@ def _vector_logo(size):
     left_stem = GraphicPath()
     left_stem.moveTo(13 * scale, 11 * scale)
     left_stem.curveTo(4 * scale, 21 * scale, 4 * scale, 43 * scale, 15 * scale, 54 * scale)
-    drawing.add(left_stem, strokeColor=GOLD, strokeWidth=1.5 * scale, fillColor=None)
+    left_stem.strokeColor = GOLD
+    left_stem.strokeWidth = 1.5 * scale
+    left_stem.fillColor = None
+    drawing.add(left_stem)
 
     right_stem = GraphicPath()
     right_stem.moveTo(51 * scale, 11 * scale)
     right_stem.curveTo(60 * scale, 21 * scale, 60 * scale, 43 * scale, 49 * scale, 54 * scale)
-    drawing.add(right_stem, strokeColor=GOLD, strokeWidth=1.5 * scale, fillColor=None)
+    right_stem.strokeColor = GOLD
+    right_stem.strokeWidth = 1.5 * scale
+    right_stem.fillColor = None
+    drawing.add(right_stem)
 
     for index, y in enumerate((14, 20, 26, 32, 38, 44, 50)):
         offset = index * 0.55
