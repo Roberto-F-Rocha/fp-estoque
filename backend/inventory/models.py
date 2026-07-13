@@ -199,7 +199,9 @@ class Movement(TimeStamped):
         ordering = ["-created_at"]
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(type__in=[choice[0] for choice in TYPES]),
+                condition=models.Q(
+                    type__in=["IN", "OUT", "ADJ+", "ADJ-", "REV"]
+                ),
                 name="inventory_movement_type_valid",
             ),
             models.CheckConstraint(
