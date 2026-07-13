@@ -12,7 +12,29 @@ import {
 } from "recharts";
 import "./styles.css";
 
-export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/";
+function resolveApiBase() {
+  const detected = `${window.location.protocol}//${window.location.hostname}:8000/api/`;
+  const configured = String(import.meta.env.VITE_API_URL || "").trim();
+
+  if (!configured) return detected;
+
+  try {
+    const parsed = new URL(configured, window.location.origin);
+    const browserIsRemote = !["localhost", "127.0.0.1"].includes(window.location.hostname);
+    const apiUsesLoopback = ["localhost", "127.0.0.1"].includes(parsed.hostname);
+
+    if (browserIsRemote && apiUsesLoopback) {
+      parsed.hostname = window.location.hostname;
+      return parsed.toString();
+    }
+
+    return configured.endsWith("/") ? configured : `${configured}/`;
+  } catch {
+    return detected;
+  }
+}
+
+export const API_BASE = resolveApiBase();
 export const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
