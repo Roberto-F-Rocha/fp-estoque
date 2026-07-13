@@ -66,11 +66,25 @@ tbody tr:hover { background: #fffdf5; }
 .summary-cards small { text-transform: capitalize; color: var(--muted); font-size: 11px; }
 .summary-cards strong { margin-top: 3px; }
 
+.dashboard-view-switch { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; margin-bottom: 18px; }
+.dashboard-view-option { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: 15px; padding: 17px 18px; background: white; color: #111; display: flex; align-items: center; gap: 14px; text-align: left; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background .15s ease; }
+.dashboard-view-option:hover { transform: translateY(-1px); border-color: #d4ad27; box-shadow: 0 8px 22px rgba(0,0,0,.07); }
+.dashboard-view-option.active { border-color: var(--gold); background: #fff9e5; box-shadow: 0 0 0 3px rgba(245,180,0,.16); }
+.dashboard-view-option > span:last-child { min-width: 0; }
+.dashboard-view-option strong, .dashboard-view-option small { display: block; }
+.dashboard-view-option strong { font-size: 17px; line-height: 1.2; }
+.dashboard-view-option small { margin-top: 5px; color: var(--muted); line-height: 1.35; }
+.dashboard-view-icon { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 13px; display: grid; place-items: center; }
+.dashboard-view-icon-sales { background: #dcfce7; color: #207a45; }
+.dashboard-view-icon-stock { background: #fff1b8; color: #8b6500; }
+.dashboard-view-content { animation: dashboard-view-enter .22s ease both; }
+@keyframes dashboard-view-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 .dashboard-filter-panel { border-top: 4px solid var(--gold); padding: 20px; }
 .dashboard-filter-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
 .dashboard-filter-heading h3, .dashboard-section-heading h3, .dashboard-panel-title h3 { margin: 0; }
 .dashboard-filter-heading p, .dashboard-section-heading p, .dashboard-panel-title p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
 .dashboard-filter-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: end; }
+.dashboard-filter-grid-stock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dashboard-scope { margin-top: 16px; padding: 12px 14px; border-radius: 11px; background: #fff8dc; border: 1px solid #f4d46b; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .dashboard-scope span, .dashboard-scope small { color: #6f5b19; }
 .dashboard-scope strong { color: #111; }
