@@ -1,17 +1,42 @@
 from reportlab.lib import colors
 from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import Image, Paragraph, Spacer, Table, TableStyle
 
+from .brand_assets import fp_logo_png_buffer
 from .constants import BLACK, GOLD, LIGHT, MUTED
 
+
 def _header(story, data, styles, available_width):
-    logo = Table([[Paragraph("<b>FP</b>", styles["Logo"])]], colWidths=[16 * mm], rowHeights=[16 * mm])
-    logo.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), GOLD), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("ALIGN", (0, 0), (-1, -1), "CENTER"), ("BOX", (0, 0), (-1, -1), 1, BLACK)]))
-    brand = [Paragraph("<b>FP DEPÓSITO DE BEBIDAS</b>", styles["Brand"]), Paragraph("Sistema interno de controle de estoque", styles["Small"])]
-    title = [Paragraph(data["title"], styles["ReportTitle"]), Paragraph(f"Período: {data['period']}", styles["SmallRight"])]
+    logo = Image(fp_logo_png_buffer(), width=18 * mm, height=18 * mm)
+    logo.hAlign = "CENTER"
+
+    brand = [
+        Paragraph("<b>FP DEPÓSITO DE BEBIDAS</b>", styles["Brand"]),
+        Paragraph("Sistema interno de controle de estoque", styles["Small"]),
+    ]
+    title = [
+        Paragraph(data["title"], styles["ReportTitle"]),
+        Paragraph(f"Período: {data['period']}", styles["SmallRight"]),
+    ]
+
     brand_width = 80 * mm if available_width > 210 * mm else 65 * mm
-    header = Table([[logo, brand, title]], colWidths=[20 * mm, brand_width, available_width - 20 * mm - brand_width])
-    header.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LINEBELOW", (0, 0), (-1, -1), 1.5, GOLD), ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
+    logo_width = 22 * mm
+    header = Table(
+        [[logo, brand, title]],
+        colWidths=[logo_width, brand_width, available_width - logo_width - brand_width],
+    )
+    header.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                ("LINEBELOW", (0, 0), (-1, -1), 1.5, GOLD),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (0, 0), 0),
+                ("RIGHTPADDING", (0, 0), (0, 0), 4),
+            ]
+        )
+    )
     story.extend([header, Spacer(1, 5 * mm)])
 
 
