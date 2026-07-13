@@ -69,7 +69,12 @@ export function getError(error) {
 }
 
 export function Logo({ compact = false }) {
-  return <div className={`brand ${compact ? "compact" : ""}`}><div className="logo-mark">FP</div>{!compact && <div><strong>FP Estoque</strong><small>Depósito de Bebidas</small></div>}</div>;
+  return (
+    <div className={`brand ${compact ? "compact" : ""}`}>
+      <img className="logo-mark" src="/fp-icon.svg" alt="FP Depósito de Bebidas" />
+      {!compact && <div><strong>FP Estoque</strong><small>Depósito de Bebidas</small></div>}
+    </div>
+  );
 }
 
 export function Button({ children, variant = "primary", icon: Icon, className = "", ...props }) {
