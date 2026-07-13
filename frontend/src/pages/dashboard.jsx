@@ -36,24 +36,52 @@ import {
   XAxis,
   YAxis,
 } from "../shared.jsx";
-import { MetricCard, PageHeader } from "../layout.jsx";
+import { MetricCard } from "../layout.jsx";
 
-const INITIAL_FILTERS = {
-  period: "7d",
-  start_date: today(),
-  end_date: today(),
-  category: "",
-  product: "",
-};
+const FILTER_STORAGE_KEY = "fp_dashboard_filters";
+const VALID_PERIODS = new Set(["today", "7d", "month", "custom"]);
+
+function defaultFilters() {
+  return {
+    period: "7d",
+    start_date: today(),
+    end_date: today(),
+    category: "",
+    product: "",
+  };
+}
+
+function loadSavedFilters() {
+  const defaults = defaultFilters();
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || "null");
+    if (!saved || typeof saved !== "object") return defaults;
+
+    return {
+      period: VALID_PERIODS.has(saved.period) ? saved.period : defaults.period,
+      start_date: saved.start_date || defaults.start_date,
+      end_date: saved.end_date || defaults.end_date,
+      category: saved.category ? String(saved.category) : "",
+      product: saved.product ? String(saved.product) : "",
+    };
+  } catch {
+    return defaults;
+  }
+}
 
 const asNumber = (value) => Number(value || 0);
 const fmtPercent = (value) => `${asNumber(value).toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
 
 export function DashboardPage() {
   const [data, setData] = useState(null);
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [filters, setFilters] = useState(loadSavedFilters);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+  }, [filters]);
 
   useEffect(() => {
     let active = true;
@@ -139,7 +167,8 @@ export function DashboardPage() {
   }
 
   function clearFilters() {
-    setFilters({ ...INITIAL_FILTERS, start_date: today(), end_date: today() });
+    localStorage.removeItem(FILTER_STORAGE_KEY);
+    setFilters(defaultFilters());
   }
 
   if (!data && loading) {
@@ -155,11 +184,6 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title="Dashboard de vendas e estoque"
-        description="Veja quanto foi vendido, o lucro bruto e quanto ainda existe em estoque."
-      />
-
       <section className="panel dashboard-filter-panel">
         <div className="dashboard-filter-heading">
           <div>
@@ -236,17 +260,6 @@ export function DashboardPage() {
       </section>
 
       {error && <div className="form-error dashboard-request-error">{error}</div>}
-
-      <div className="dashboard-help">
-        <CircleDollarSign size={22} />
-        <div>
-          <strong>Como o resultado é calculado</strong>
-          <p>
-            “Vendido” considera somente saídas confirmadas com o motivo “Retirada para comercialização”.
-            O lucro bruto é o valor vendido menos o custo dos produtos vendidos.
-          </p>
-        </div>
-      </div>
 
       <div className="dashboard-section-heading">
         <div>
