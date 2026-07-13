@@ -37,11 +37,17 @@ small.block { display: block; color: var(--muted); margin-top: 3px; }
 .brand strong { display: block; font-size: 16px; }
 .brand small { display: block; color: #777; margin-top: 1px; }
 .brand.compact { justify-content: center; }
-.logo-mark { width: 44px; height: 44px; border-radius: 12px; background: var(--gold); color: #111; display: grid; place-items: center; font-weight: 900; box-shadow: inset 0 -2px 0 rgba(0,0,0,.08); }
+.logo-mark {
+  width: 52px; height: 52px; flex: 0 0 52px; border-radius: 50%;
+  background: url('/fp-logo.svg') center/contain no-repeat;
+  color: transparent; font-size: 0; box-shadow: 0 4px 14px rgba(0,0,0,.22);
+}
 
-.login-page { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: #101010; position: relative; overflow: hidden; }
+.login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(280px, 520px) minmax(360px, 430px); align-items: center; justify-content: center; gap: clamp(34px, 6vw, 96px); padding: 36px; background: #101010; position: relative; overflow: hidden; }
+.login-page::before { content: ""; width: min(42vw, 500px); aspect-ratio: 1; background: url('/fp-logo.svg') center/contain no-repeat; filter: drop-shadow(0 24px 45px rgba(0,0,0,.42)); position: relative; z-index: 1; animation: logo-enter .55s ease both; }
 .login-accent { position: absolute; width: 70vw; height: 70vw; background: var(--gold); transform: rotate(45deg); right: -40vw; bottom: -48vw; }
-.login-card { position: relative; width: min(430px, 100%); background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 24px 80px rgba(0,0,0,.35); display: grid; gap: 17px; }
+.login-card { position: relative; z-index: 2; width: min(430px, 100%); background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 24px 80px rgba(0,0,0,.35); display: grid; gap: 17px; }
+.login-card .brand { display: none; }
 .login-heading { margin-top: 12px; }
 .login-heading p { color: var(--muted); margin: 0 0 4px; }
 .login-heading h1 { font-size: 30px; margin: 0; }
@@ -50,6 +56,7 @@ small.block { display: block; color: var(--muted); margin-top: 3px; }
 .password-input button { position: absolute; right: 5px; top: 5px; width: 34px; height: 34px; border: 0; background: transparent; display: grid; place-items: center; color: #555; }
 .link-button { border: 0; background: transparent; color: #9a6700; font-weight: 700; text-align: center; }
 .form-error { background: #fff1f0; color: #b42318; border: 1px solid #fecdca; padding: 10px 12px; border-radius: 10px; font-size: 14px; }
+@keyframes logo-enter { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
 
 .btn { border: 0; border-radius: 10px; min-height: 42px; padding: 10px 16px; font-weight: 800; display: inline-flex; gap: 8px; align-items: center; justify-content: center; transition: .15s ease; }
 .btn:hover { transform: translateY(-1px); }
