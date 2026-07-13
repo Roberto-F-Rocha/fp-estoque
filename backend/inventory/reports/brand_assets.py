@@ -1,13 +1,88 @@
-import base64
-from io import BytesIO
+import math
+from pathlib import Path
+
+from django.conf import settings
+from reportlab.graphics.shapes import Circle, Drawing, Path as GraphicPath, Polygon, Rect, String
+from reportlab.lib.colors import HexColor, white
+from reportlab.platypus import Image
 
 
-FP_LOGO_PNG_BASE64 = """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"""
+GOLD = HexColor("#F5B400")
+BLACK = HexColor("#111111")
 
 
-def fp_logo_png_bytes():
-    return base64.b64decode(FP_LOGO_PNG_BASE64)
+def _find_png_logo():
+    candidates = [
+        Path(settings.BASE_DIR).parent / "frontend" / "public" / "fp-logo.png",
+        Path(settings.BASE_DIR) / "inventory" / "assets" / "fp-logo.png",
+    ]
+    return next((path for path in candidates if path.is_file()), None)
 
 
-def fp_logo_png_buffer():
-    return BytesIO(fp_logo_png_bytes())
+def _star_points(cx, cy, outer_radius, inner_radius):
+    points = []
+    for index in range(10):
+        angle = math.radians(-90 + index * 36)
+        radius = outer_radius if index % 2 == 0 else inner_radius
+        points.extend([cx + math.cos(angle) * radius, cy + math.sin(angle) * radius])
+    return points
+
+
+def _leaf_points(cx, cy, side, scale):
+    return [
+        cx,
+        cy,
+        cx + side * 5 * scale,
+        cy + 3 * scale,
+        cx + side * 7 * scale,
+        cy + 7 * scale,
+        cx + side * 2 * scale,
+        cy + 5 * scale,
+    ]
+
+
+def _vector_logo(size):
+    scale = size / 64
+    drawing = Drawing(size, size)
+
+    drawing.add(Circle(32 * scale, 32 * scale, 29 * scale, fillColor=BLACK, strokeColor=GOLD, strokeWidth=2.3 * scale))
+    drawing.add(Circle(32 * scale, 32 * scale, 25.5 * scale, fillColor=None, strokeColor=white, strokeWidth=1.2 * scale))
+
+    left_stem = GraphicPath()
+    left_stem.moveTo(13 * scale, 11 * scale)
+    left_stem.curveTo(4 * scale, 21 * scale, 4 * scale, 43 * scale, 15 * scale, 54 * scale)
+    drawing.add(left_stem, strokeColor=GOLD, strokeWidth=1.5 * scale, fillColor=None)
+
+    right_stem = GraphicPath()
+    right_stem.moveTo(51 * scale, 11 * scale)
+    right_stem.curveTo(60 * scale, 21 * scale, 60 * scale, 43 * scale, 49 * scale, 54 * scale)
+    drawing.add(right_stem, strokeColor=GOLD, strokeWidth=1.5 * scale, fillColor=None)
+
+    for index, y in enumerate((14, 20, 26, 32, 38, 44, 50)):
+        offset = index * 0.55
+        drawing.add(Polygon(_leaf_points((12 - offset) * scale, y * scale, -1, scale), fillColor=GOLD, strokeColor=None))
+        drawing.add(Polygon(_leaf_points((52 + offset) * scale, y * scale, 1, scale), fillColor=GOLD, strokeColor=None))
+
+    drawing.add(String(32 * scale, 50 * scale, "2024", fontName="Helvetica-Bold", fontSize=6.3 * scale, fillColor=white, textAnchor="middle"))
+
+    for x in (25, 32, 39):
+        drawing.add(Polygon(_star_points(x * scale, 43.5 * scale, 3.3 * scale, 1.45 * scale), fillColor=GOLD, strokeColor=None))
+
+    drawing.add(String(32 * scale, 27 * scale, "FP", fontName="Times-Bold", fontSize=21 * scale, fillColor=white, textAnchor="middle"))
+    drawing.add(String(32 * scale, 20 * scale, "DEPÓSITO DE BEBIDAS", fontName="Helvetica-Bold", fontSize=4.5 * scale, fillColor=white, textAnchor="middle"))
+
+    drawing.add(Circle(18 * scale, 10.5 * scale, 3.2 * scale, fillColor=None, strokeColor=GOLD, strokeWidth=1.5 * scale))
+    drawing.add(Circle(46 * scale, 10.5 * scale, 3.2 * scale, fillColor=None, strokeColor=GOLD, strokeWidth=1.5 * scale))
+    drawing.add(Rect(19 * scale, 5 * scale, 10 * scale, 12 * scale, rx=1.3 * scale, ry=1.3 * scale, fillColor=GOLD, strokeColor=white, strokeWidth=1.1 * scale))
+    drawing.add(Rect(35 * scale, 5 * scale, 10 * scale, 12 * scale, rx=1.3 * scale, ry=1.3 * scale, fillColor=GOLD, strokeColor=white, strokeWidth=1.1 * scale))
+    drawing.add(Rect(19 * scale, 14 * scale, 10 * scale, 3 * scale, rx=1 * scale, ry=1 * scale, fillColor=white, strokeColor=white))
+    drawing.add(Rect(35 * scale, 14 * scale, 10 * scale, 3 * scale, rx=1 * scale, ry=1 * scale, fillColor=white, strokeColor=white))
+
+    return drawing
+
+
+def fp_logo_flowable(size):
+    png_logo = _find_png_logo()
+    if png_logo:
+        return Image(str(png_logo), width=size, height=size)
+    return _vector_logo(size)
