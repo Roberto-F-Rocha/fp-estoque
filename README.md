@@ -78,7 +78,9 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173
 VITE_API_URL=http://localhost:8000/api/
 ```
 
-A senha do banco é o único dado que precisa ser preenchido manualmente porque é um segredo privado e não deve ser enviado ao GitHub. Caso possua caracteres especiais, faça URL encoding. Outra opção é copiar a URI completa exibida pelo Supabase em **Connect** e utilizá-la como `DATABASE_URL`.
+A senha do banco é o único dado que precisa ser preenchido manualmente porque é um segredo privado e não deve ser enviado ao GitHub. Caso possua caracteres especiais, faça URL encoding.
+
+Se a sua rede não aceitar a conexão direta, abra **Connect** no painel do Supabase, selecione **Session Pooler**, copie a URI exibida e utilize-a como `DATABASE_URL`.
 
 O arquivo `.env` está ignorado pelo Git e não deve ser enviado ao repositório.
 
