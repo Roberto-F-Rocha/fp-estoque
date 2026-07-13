@@ -22,10 +22,11 @@ O projeto já foi criado e o schema inicial já foi aplicado no Supabase.
 | Região | `sa-east-1` — São Paulo |
 | URL | `https://rstfrilzzybdaelinmzb.supabase.co` |
 
-As tabelas do Django e do módulo de estoque já existem no banco. A migração SQL utilizada está versionada em:
+As tabelas do Django e do módulo de estoque já existem no banco. As migrações SQL aplicadas estão versionadas em:
 
 ```text
 supabase/migrations/20260712205806_django_inventory_initial_schema.sql
+supabase/migrations/20260712212000_deny_direct_postgrest_inventory_access.sql
 ```
 
 Nenhuma senha, chave privada ou credencial administrativa é armazenada no GitHub.
@@ -157,10 +158,12 @@ O front-end não acessa o banco diretamente. Todas as validações e operações
 
 - a conexão PostgreSQL exige SSL;
 - as tabelas de estoque estão com Row Level Security habilitada;
-- o acesso público das funções `anon` e `authenticated` foi revogado;
-- o Django acessa o banco exclusivamente pela `DATABASE_URL` privada;
+- foram criadas políticas explícitas de bloqueio para `anon` e `authenticated`;
+- os privilégios públicos das tabelas e sequências foram revogados;
+- o acesso aos dados ocorre exclusivamente pela API Django;
 - o estoque não pode ficar negativo;
-- as movimentações são registradas com usuário, data e quantidade anterior/final.
+- as movimentações são registradas com usuário, data e quantidade anterior/final;
+- a verificação de segurança do Supabase não apresenta alertas ativos.
 
 ## Relatório diário
 
