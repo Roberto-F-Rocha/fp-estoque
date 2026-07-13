@@ -10,11 +10,15 @@ load_dotenv(BASE_DIR.parent / ".env")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-change-me")
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+ALLOW_LAN_DEV = os.getenv("ALLOW_LAN_DEV", "true").lower() == "true"
+
 ALLOWED_HOSTS = [
     value.strip()
     for value in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
     if value.strip()
 ]
+if DEBUG and ALLOW_LAN_DEV and "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append("*")
 
 SUPABASE_PROJECT_ID = os.getenv("SUPABASE_PROJECT_ID", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -97,9 +101,21 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
     value.strip()
-    for value in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
+    for value in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
     if value.strip()
 ]
+CORS_ALLOWED_ORIGIN_REGEXES = []
+if DEBUG and ALLOW_LAN_DEV:
+    CORS_ALLOWED_ORIGIN_REGEXES = [
+        r"^http://localhost:\d+$",
+        r"^http://127\.0\.0\.1:\d+$",
+        r"^http://192\.168\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://10\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+$",
+        r"^http://172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}:\d+$",
+    ]
 CORS_ALLOW_CREDENTIALS = False
 
 REST_FRAMEWORK = {
@@ -137,7 +153,3 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": os.getenv("DJANGO_LOG_LEVEL", "INFO")},
 }
-
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SECURE = not DEBUG
