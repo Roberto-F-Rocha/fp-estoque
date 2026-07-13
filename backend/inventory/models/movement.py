@@ -8,6 +8,7 @@ from django.db.models import F, Q
 from .base import TimeStamped
 from .catalog import Lot, Product
 
+
 class Movement(TimeStamped):
     ENTRY = "ENTRY"
     OUTPUT = "OUTPUT"
@@ -43,6 +44,7 @@ class Movement(TimeStamped):
     previous_stock = models.DecimalField(max_digits=14, decimal_places=3)
     final_stock = models.DecimalField(max_digits=14, decimal_places=3)
     unit_cost = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    unit_sale_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     reason = models.CharField(max_length=200, blank=True)
     document = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
@@ -70,6 +72,14 @@ class Movement(TimeStamped):
     def total_value(self):
         return self.quantity * self.unit_cost
 
+    @property
+    def sale_value(self):
+        return self.quantity * self.unit_sale_price
+
+    @property
+    def gross_profit(self):
+        return self.sale_value - self.total_value
+
     @classmethod
     def register(
         cls,
@@ -83,6 +93,7 @@ class Movement(TimeStamped):
         document="",
         notes="",
         unit_cost=None,
+        unit_sale_price=None,
         entry=None,
         output=None,
         reversal_of=None,
@@ -113,6 +124,9 @@ class Movement(TimeStamped):
 
             product.stock = previous + delta
             product.save(update_fields=["stock", "updated_at"])
+            sale_price = unit_sale_price
+            if sale_price is None:
+                sale_price = product.sale_price if type == cls.OUTPUT else Decimal("0")
             return cls.objects.create(
                 product=product,
                 lot=lot,
@@ -121,6 +135,7 @@ class Movement(TimeStamped):
                 previous_stock=previous,
                 final_stock=product.stock,
                 unit_cost=unit_cost if unit_cost is not None else product.cost_price,
+                unit_sale_price=sale_price,
                 reason=reason,
                 document=document,
                 notes=notes,
@@ -142,6 +157,7 @@ class Movement(TimeStamped):
         notes="",
         document="",
         output=None,
+        unit_sale_price=None,
     ):
         remaining = Decimal(str(quantity))
         movements = []
@@ -161,6 +177,7 @@ class Movement(TimeStamped):
                     notes=notes,
                     document=document,
                     output=output,
+                    unit_sale_price=unit_sale_price,
                 )
             ]
 
@@ -184,6 +201,7 @@ class Movement(TimeStamped):
                     notes=notes,
                     document=document,
                     output=output,
+                    unit_sale_price=unit_sale_price,
                 )
             )
             remaining -= take
@@ -201,6 +219,7 @@ class Movement(TimeStamped):
                     notes=notes,
                     document=document,
                     output=output,
+                    unit_sale_price=unit_sale_price,
                 )
             )
         return movements
@@ -222,10 +241,9 @@ class Movement(TimeStamped):
                 document=original.document,
                 notes=original.notes,
                 unit_cost=original.unit_cost,
+                unit_sale_price=original.unit_sale_price,
                 reversal_of=original,
             )
             original.reversed = True
             original.save(update_fields=["reversed", "updated_at"])
             return movement
-
-
