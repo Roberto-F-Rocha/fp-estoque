@@ -1,14 +1,13 @@
 from reportlab.lib import colors
 from reportlab.lib.units import mm
-from reportlab.platypus import Image, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, Spacer, Table, TableStyle
 
-from .brand_assets import fp_logo_png_buffer
+from .brand_assets import fp_logo_flowable
 from .constants import BLACK, GOLD, LIGHT, MUTED
 
 
 def _header(story, data, styles, available_width):
-    logo = Image(fp_logo_png_buffer(), width=18 * mm, height=18 * mm)
-    logo.hAlign = "CENTER"
+    logo = fp_logo_flowable(18 * mm)
 
     brand = [
         Paragraph("<b>FP DEPÓSITO DE BEBIDAS</b>", styles["Brand"]),
