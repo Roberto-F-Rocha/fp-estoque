@@ -168,3 +168,10 @@ class ProductTest(TestCase):
             response.data["detail"],
             "Informe o código de barras.",
         )
+    
+    def test_barcode_endpoint_returns_404_when_product_does_not_exist(self):
+        response = self.client.get(
+            "/api/products/barcode/?value=9999999999999"
+        )
+        
+        self.assertEqual(response.status_code, 404)
