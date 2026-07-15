@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -65,14 +66,24 @@ TEMPLATES = [
 ]
 WSGI_APPLICATION = "config.wsgi.application"
 
-if os.getenv("USE_SQLITE_FOR_TESTS", "false").lower() == "true":
-    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "test.sqlite3"}}
+RUNNING_TESTS = "test" in sys.argv
+
+if RUNNING_TESTS or os.getenv("USE_SQLITE_FOR_TESTS", "false").lower() == "true":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 else:
     DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
     if not DATABASE_URL:
-        raise RuntimeError("DATABASE_URL não foi definida. Configure a conexão PostgreSQL do Supabase no arquivo .env.")
+        raise RuntimeError(
+            "DATABASE_URL não foi definida. Configure a conexão PostgreSQL do Supabase no arquivo .env"
+        )    
     if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
         raise RuntimeError("DATABASE_URL deve apontar para um banco PostgreSQL.")
+    
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,
@@ -81,7 +92,7 @@ else:
         )
     }
     DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"].setdefault("sslmode", "require")
+    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
