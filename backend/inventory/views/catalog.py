@@ -46,6 +46,7 @@ class CategoryViewSet(BaseViewSet):
     serializer_class = CategorySerializer
     search_fields = ["name", "description"]
     filterset_fields = ["active"]
+    ordering = ["name"]
     ordering_fields = ["name", "created_at"]
 
 
