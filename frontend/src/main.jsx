@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { api, EmptyState, Logo, RefreshCw, Toast, unwrap } from "./shared.jsx";
-import { Login } from "./auth.jsx";
+import { api, Button, EmptyState, Logo, RefreshCw, Toast, unwrap } from "./shared.jsx";
+import { Login, Setup } from "./auth.jsx";
 import { Shell } from "./layout.jsx";
 import { DashboardPage } from "./pages/dashboard.jsx";
 import { ProductsPage } from "./pages/products.jsx";
@@ -18,22 +18,94 @@ import { UsersPage } from "./pages/users.jsx";
 import { SettingsPage } from "./pages/settings.jsx";
 
 function App() {
+  const [booting, setBooting] = useState(true);
+  const [bootError, setBootError] = useState("");
+  const [setupRequired, setSetupRequired] = useState(false);
+  const [initialUsername, setInitialUsername] = useState("admin");
   const [logged, setLogged] = useState(Boolean(localStorage.getItem("fp_access")));
   const [me, setMe] = useState(null);
   const [page, setPage] = useState("dashboard");
   const [toast, setToast] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const notify = (message, type = "success") => setToast({ message, type });
+
+  const loadDesktopStatus = useCallback(async () => {
+    setBooting(true);
+    setBootError("");
+    try {
+      const response = await api.get("desktop/status/");
+      setSetupRequired(Boolean(response.data.setup_required));
+      if (response.data.setup_required) {
+        localStorage.removeItem("fp_access");
+        localStorage.removeItem("fp_refresh");
+        setLogged(false);
+      }
+    } catch {
+      setBootError("Não foi possível iniciar o serviço local do FP Estoque.");
+    } finally {
+      setBooting(false);
+    }
+  }, []);
+
   async function loadMe() {
     try {
-      const [user, notices] = await Promise.all([api.get("users/me/"), api.get("notifications/?page_size=30")]);
-      setMe(user.data); setNotifications(unwrap(notices.data));
-    } catch { setLogged(false); localStorage.removeItem("fp_access"); localStorage.removeItem("fp_refresh"); }
+      const [user, notices] = await Promise.all([
+        api.get("users/me/"),
+        api.get("notifications/?page_size=30"),
+      ]);
+      setMe(user.data);
+      setNotifications(unwrap(notices.data));
+    } catch {
+      setLogged(false);
+      localStorage.removeItem("fp_access");
+      localStorage.removeItem("fp_refresh");
+    }
   }
-  useEffect(() => { if (logged) loadMe(); }, [logged]);
-  function logout() { localStorage.removeItem("fp_access"); localStorage.removeItem("fp_refresh"); setLogged(false); setMe(null); }
-  if (!logged) return <Login onLogin={() => setLogged(true)} />;
+
+  useEffect(() => {
+    loadDesktopStatus();
+  }, [loadDesktopStatus]);
+
+  useEffect(() => {
+    if (logged && !setupRequired) loadMe();
+  }, [logged, setupRequired]);
+
+  function logout() {
+    localStorage.removeItem("fp_access");
+    localStorage.removeItem("fp_refresh");
+    setLogged(false);
+    setMe(null);
+  }
+
+  if (booting) {
+    return <div className="app-loading"><Logo /><RefreshCw className="spin" /> Preparando arquivos locais...</div>;
+  }
+
+  if (bootError) {
+    return (
+      <div className="app-loading app-loading-error">
+        <Logo />
+        <strong>{bootError}</strong>
+        <span>Feche o aplicativo, abra novamente e verifique se outro FP Estoque já está em execução.</span>
+        <Button icon={RefreshCw} onClick={loadDesktopStatus}>Tentar novamente</Button>
+      </div>
+    );
+  }
+
+  if (setupRequired) {
+    return (
+      <Setup
+        onComplete={(username) => {
+          setInitialUsername(username || "admin");
+          setSetupRequired(false);
+        }}
+      />
+    );
+  }
+
+  if (!logged) return <Login initialUsername={initialUsername} onLogin={() => setLogged(true)} />;
   if (!me) return <div className="app-loading"><Logo /><RefreshCw className="spin" /> Carregando sistema...</div>;
+
   const pages = {
     dashboard: <DashboardPage />,
     products: <ProductsPage notify={notify} me={me} />,
@@ -50,7 +122,26 @@ function App() {
     users: <UsersPage notify={notify} />,
     settings: <SettingsPage notify={notify} />,
   };
-  return <><Shell me={me} page={page} setPage={setPage} onLogout={logout} notifications={notifications} onRefreshNotifications={loadMe}>{pages[page] || <EmptyState title="Página não encontrada" text="Selecione uma opção no menu." />}</Shell><Toast toast={toast} onClose={() => setToast(null)} /></>;
+
+  return (
+    <>
+      <Shell
+        me={me}
+        page={page}
+        setPage={setPage}
+        onLogout={logout}
+        notifications={notifications}
+        onRefreshNotifications={loadMe}
+      >
+        {pages[page] || <EmptyState title="Página não encontrada" text="Selecione uma opção no menu." />}
+      </Shell>
+      <Toast toast={toast} onClose={() => setToast(null)} />
+    </>
+  );
 }
 
-createRoot(document.getElementById("root")).render(<React.StrictMode><App /></React.StrictMode>);
+createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
