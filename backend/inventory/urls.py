@@ -17,7 +17,10 @@ from .views import (
     SystemSettingViewSet,
     UserViewSet,
     dashboard,
+    desktop_setup,
+    desktop_status,
     forgot_password,
+    health,
     report_catalog,
     report_export,
     report_preview,
@@ -44,6 +47,9 @@ router.register("settings", SystemSettingViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("health/", health, name="health"),
+    path("desktop/status/", desktop_status, name="desktop-status"),
+    path("desktop/setup/", desktop_setup, name="desktop-setup"),
     path("dashboard/", dashboard, name="dashboard"),
     path("auth/forgot-password/", forgot_password, name="forgot-password"),
     path("auth/reset-password/", reset_password, name="reset-password"),
