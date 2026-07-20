@@ -154,6 +154,8 @@ def main():
     data_dir.mkdir(parents=True, exist_ok=True)
     (data_dir / "media").mkdir(parents=True, exist_ok=True)
     (data_dir / "backups").mkdir(parents=True, exist_ok=True)
+    webview_data_dir = data_dir / "webview"
+    webview_data_dir.mkdir(parents=True, exist_ok=True)
 
     _configure_environment(root, data_dir)
 
@@ -204,6 +206,7 @@ def main():
             gui="edgechromium",
             debug=os.getenv("DEBUG", "false").lower() == "true",
             private_mode=False,
+            storage_path=str(webview_data_dir),
         )
     except Exception as exc:
         _show_error(
