@@ -70,11 +70,13 @@ def desktop_setup(request):
             email=email,
             password=password,
         )
-        UserProfile.objects.create(
+        UserProfile.objects.update_or_create(
             user=user,
-            full_name=full_name,
-            role=UserProfile.ADMIN,
-            active=True,
+            defaults={
+                "full_name": full_name,
+                "role": UserProfile.ADMIN,
+                "active": True,
+            },
         )
 
     return Response(
