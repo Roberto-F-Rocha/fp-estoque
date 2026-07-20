@@ -52,8 +52,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
       - run: npm install
       - run: npm run build
       - run: npm run build:desktop
@@ -79,8 +77,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
       - run: python -m pip install --upgrade pip
       - run: pip install -r backend/requirements-desktop.txt
       - name: Build desktop frontend
