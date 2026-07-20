@@ -1,54 +1,126 @@
-# FP Estoque — Depósito de Bebidas
+# FP Estoque Desktop — Depósito de Bebidas
 
-Sistema web completo para o controle interno de estoque do **FP Depósito de Bebidas**, desenvolvido com React, Tailwind CSS, Django REST Framework e PostgreSQL hospedado no Supabase.
+Versão desktop do sistema interno de estoque do **FP Depósito de Bebidas**. O programa funciona diretamente na máquina, abre em uma janela própria e não depende de navegador, servidor de hospedagem, PostgreSQL, Supabase ou qualquer banco de dados externo.
+
+## Como os dados são armazenados
+
+Todo o conteúdo fica em arquivos locais:
+
+- Banco principal: `fp-estoque.sqlite3`.
+- Imagens dos produtos: pasta `media/products`.
+- Backups automáticos: pasta `backups`.
+- Chave interna do sistema: arquivo `.secret-key`.
+
+No Windows, a pasta padrão é:
+
+```text
+%LOCALAPPDATA%\FP Estoque
+```
+
+O banco SQLite é um arquivo único e pode ser copiado junto com a pasta `media` para realizar uma cópia de segurança completa. O aplicativo mantém automaticamente os 30 backups mais recentes do banco.
 
 ## Funcionalidades
 
-- Login JWT, recuperação de senha e perfis Administrador/Operador.
+- Login local, recuperação de senha e perfis Administrador/Operador.
+- Configuração do primeiro administrador na primeira abertura.
 - Cadastro e inativação de usuários, produtos, categorias e fornecedores.
-- Produtos com SKU, código de barras, preços, estoque mínimo/máximo, localização e imagem.
+- Produtos com SKU, código de barras, preços, estoque mínimo/máximo, localização e imagem local.
 - Entradas em rascunho, confirmação, custo médio e cancelamento com estorno.
 - Saídas em rascunho, validação de saldo, seleção de lote e consumo FEFO.
 - Ajustes positivos/negativos com justificativa e permissão administrativa.
 - Lotes, fabricação, validade, alertas e estoque por lote.
 - Inventários físicos, divergências e ajustes controlados.
 - Histórico imutável de movimentações, estornos e logs de auditoria.
-- Dashboard com indicadores e gráficos por período.
+- Dashboard de vendas, lucro e posição atual do estoque.
 - Central de alertas e notificações.
-- 18 tipos de relatórios com pré-visualização e exportação PDF/CSV.
-- Relatório diário completo, inclusive para dias sem movimentação.
-- Swagger/OpenAPI em `/api/docs/`.
+- 18 tipos de relatórios com pré-visualização e exportação em PDF ou Excel (`.xlsx`).
 
-## Relatórios
+## Arquitetura local
 
-- Relatório diário de movimentações.
-- Posição atual e quantidade por produto/lote.
-- Estoque baixo, sem estoque, próximos do vencimento e vencidos.
-- Entradas e saídas por período.
-- Histórico completo, por usuário e por produto.
-- Valor total e valor por categoria.
-- Entradas por fornecedor.
-- Divergências de inventário.
-- Produtos com pouca movimentação.
+- **Interface:** React compilado e incorporado ao aplicativo.
+- **Regras do sistema:** Django REST Framework executado somente em `127.0.0.1`.
+- **Banco:** SQLite local.
+- **Janela desktop:** PyWebView com o mecanismo nativo do Windows.
+- **Executável:** PyInstaller.
 
-Os relatórios aceitam filtros aplicáveis, permitem pré-visualização e exportam PDF paginado com orientação automática ou CSV em UTF-8.
+O serviço interno existe apenas para a comunicação entre a janela e as regras do sistema na própria máquina. Ele não é publicado na internet e não precisa ser aberto em um navegador.
 
-## Requisitos
+## Executar durante o desenvolvimento
 
-- Python 3.12 ou superior.
-- Node.js 20 ou superior.
-- Projeto PostgreSQL no Supabase.
+Na raiz do projeto, execute:
 
-## Configuração local
+```cmd
+scripts\run_desktop_dev.bat
+```
 
-Na raiz do repositório:
+O script:
+
+1. cria o ambiente virtual Python;
+2. instala as dependências;
+3. compila a interface React;
+4. aplica as migrações no arquivo SQLite;
+5. abre o FP Estoque em uma janela própria.
+
+Na primeira abertura, o sistema solicitará:
+
+- nome completo do administrador;
+- nome de usuário;
+- e-mail opcional;
+- senha e confirmação.
+
+Não existe senha padrão gravada no projeto.
+
+## Gerar o executável Windows
+
+Execute:
+
+```cmd
+scripts\build_desktop.bat
+```
+
+Ao concluir, o aplicativo estará em:
+
+```text
+dist\FP Estoque\FP Estoque.exe
+```
+
+A pasta inteira `dist\FP Estoque` deve ser mantida junto do executável. Ela pode ser copiada para outra máquina Windows.
+
+## Configuração opcional
+
+O sistema funciona sem arquivo `.env`. Para mudar a pasta dos dados ou a porta interna:
 
 ```cmd
 copy .env.example .env
 notepad .env
 ```
 
-Preencha `DATABASE_URL` com a conexão Session Pooler do Supabase. Nunca envie o arquivo `.env` ao GitHub.
+Principais opções:
+
+```env
+FP_DATA_DIR=D:\FP Estoque Dados
+FP_DESKTOP_PORT=8765
+DEBUG=false
+```
+
+Não adicione `DATABASE_URL`, chaves do Supabase ou credenciais de nuvem nesta versão.
+
+## Backup e transferência para outra máquina
+
+Para copiar todos os dados:
+
+1. feche o FP Estoque;
+2. abra `%LOCALAPPDATA%\FP Estoque`;
+3. copie toda a pasta para um local seguro.
+
+Para transferir o sistema:
+
+1. instale ou copie o aplicativo na nova máquina;
+2. execute-o uma vez e feche;
+3. substitua a pasta `%LOCALAPPDATA%\FP Estoque` pela cópia anterior;
+4. abra novamente o programa.
+
+## Desenvolvimento manual
 
 ### Backend
 
@@ -56,88 +128,50 @@ Preencha `DATABASE_URL` com a conexão Session Pooler do Supabase. Nunca envie o
 cd backend
 py -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-desktop.txt
 python manage.py migrate
-python manage.py bootstrap_admin
-python manage.py runserver
 ```
 
-Backend: `http://127.0.0.1:8000/`  
-Swagger: `http://127.0.0.1:8000/api/docs/`  
-Admin: `http://127.0.0.1:8000/admin/`
-
-### Frontend
-
-Em outro terminal:
+### Interface desktop
 
 ```cmd
 cd frontend
 npm install
-npm run dev
+npm run build:desktop
 ```
 
-Interface: `http://localhost:5173/`
+### Abrir a janela
 
-## Dados de exemplo
+Na raiz do projeto:
 
 ```cmd
-python manage.py seed_example_data
+backend\.venv\Scripts\python.exe desktop\app.py
 ```
-
-O comando cria registros somente para validação do ambiente. Os relatórios sempre consultam os dados persistidos no banco.
-
-## Alertas
-
-```cmd
-python manage.py refresh_stock_alerts
-```
-
-O prazo de validade é configurável pela chave `expiration_alert_days` na tela **Configurações**.
-
-## Supabase Storage
-
-O bucket `product-images` armazena imagens dos produtos. Para habilitar upload pelo backend, configure somente no `.env` do servidor:
-
-```env
-SUPABASE_STORAGE_BUCKET=product-images
-SUPABASE_SERVICE_ROLE_KEY=chave_privada_do_servidor
-```
-
-A service role nunca deve ser usada no navegador nem versionada.
 
 ## Testes
 
 ```cmd
 cd backend
-set USE_SQLITE_FOR_TESTS=true
+.venv\Scripts\activate
 python manage.py test inventory -v 2
 ```
-
-Os testes cobrem login e permissões, cadastro, entradas, saídas, estoque negativo, FEFO, cancelamento/estorno, ajustes, alertas, validade, inventário e relatórios.
 
 ```cmd
 cd frontend
 npm install
 npm run build
+npm run build:desktop
 ```
 
-## API principal
+A integração contínua também gera um pacote Windows para validar o executável.
 
-- `/api/auth/login/`, `/api/auth/refresh/`, `/api/auth/forgot-password/` e `/api/auth/reset-password/`.
-- `/api/users/`, `/api/products/`, `/api/categories/`, `/api/suppliers/`.
-- `/api/lots/`, `/api/entries/`, `/api/outputs/`, `/api/movements/`.
-- `/api/adjustments/`, `/api/inventories/`, `/api/alerts/`, `/api/notifications/`.
-- `/api/dashboard/`.
-- `/api/reports/`, `/api/reports/preview/`, `/api/reports/export.pdf` e `/api/reports/export.csv`.
+## Segurança local
 
-## Segurança
+- Senhas armazenadas com o hash nativo do Django.
+- Autenticação JWT e permissões verificadas no frontend e backend.
+- Serviço restrito ao endereço local `127.0.0.1`.
+- Banco e imagens não são enviados para serviços externos.
+- Chave interna gerada automaticamente na pasta local de dados.
+- Backups automáticos mantidos na própria máquina.
 
-- Senhas armazenadas pelo hash nativo do Django.
-- Autenticação JWT e proteção de rotas.
-- Permissões verificadas no frontend e no backend.
-- CORS configurável por ambiente.
-- RLS habilitada no Supabase e acesso direto de `anon`/`authenticated` bloqueado.
-- Histórico e logs preservados para auditoria.
-- Credenciais mantidas somente em variáveis de ambiente.
-
-O sistema é exclusivamente interno e não contém cadastro de clientes, vendas, entregas ou pedidos comerciais.
+Esta branch é uma alternativa local à versão conectada ao Supabase. Nenhuma alteração desta versão é aplicada à branch web original.

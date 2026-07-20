@@ -1,0 +1,23 @@
+.setup-card {
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  gap: 13px;
+  padding: 28px 32px;
+}
+
+.setup-card .login-heading h1 { font-size: 28px; }
+.setup-card .muted { margin: 0; font-size: 13px; line-height: 1.45; }
+
+.app-loading-error {
+  padding: 32px;
+  text-align: center;
+}
+
+.app-loading-error strong { font-size: 20px; }
+.app-loading-error span { max-width: 560px; color: #d1d5db; line-height: 1.5; }
+.app-loading-error .btn { min-width: 190px; }
+
+@media (max-height: 760px) and (min-width: 901px) {
+  .setup-card { max-height: calc(100vh - 24px); padding-block: 22px; }
+  .setup-card .login-heading { margin-top: 0; }
+}

@@ -1,17 +1,64 @@
 import os
+import secrets
 import sys
 from datetime import timedelta
 from pathlib import Path
 
-import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR.parent / ".env")
+PROJECT_DIR = BASE_DIR.parent
+load_dotenv(PROJECT_DIR / ".env")
 
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-change-me")
-DEBUG = os.getenv("DEBUG", "true").lower() == "true"
-ALLOW_LAN_DEV = os.getenv("ALLOW_LAN_DEV", "true").lower() == "true"
+
+def _default_data_dir():
+    configured = os.getenv("FP_DATA_DIR", "").strip()
+    if configured:
+        return Path(configured).expanduser().resolve()
+
+    local_app_data = os.getenv("LOCALAPPDATA")
+    if local_app_data:
+        return Path(local_app_data) / "FP Estoque"
+
+    xdg_data_home = os.getenv("XDG_DATA_HOME")
+    if xdg_data_home:
+        return Path(xdg_data_home) / "fp-estoque"
+
+    return Path.home() / ".fp-estoque"
+
+
+DATA_DIR = _default_data_dir()
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+MEDIA_ROOT = DATA_DIR / "media"
+BACKUP_ROOT = DATA_DIR / "backups"
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+BACKUP_ROOT.mkdir(parents=True, exist_ok=True)
+
+DESKTOP_FRONTEND_DIR = Path(
+    os.getenv("FP_FRONTEND_DIR", BASE_DIR / "desktop_frontend")
+).expanduser().resolve()
+
+
+def _load_or_create_secret_key():
+    configured = os.getenv("DJANGO_SECRET_KEY", "").strip()
+    if configured:
+        return configured
+
+    secret_file = DATA_DIR / ".secret-key"
+    if secret_file.exists():
+        value = secret_file.read_text(encoding="utf-8").strip()
+        if value:
+            return value
+
+    value = secrets.token_urlsafe(64)
+    secret_file.write_text(value, encoding="utf-8")
+    return value
+
+
+SECRET_KEY = _load_or_create_secret_key()
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+ALLOW_LAN_DEV = os.getenv("ALLOW_LAN_DEV", "false").lower() == "true"
+DESKTOP_MODE = os.getenv("FP_DESKTOP_MODE", "true").lower() == "true"
 
 ALLOWED_HOSTS = [
     value.strip()
@@ -20,10 +67,6 @@ ALLOWED_HOSTS = [
 ]
 if DEBUG and ALLOW_LAN_DEV and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append("*")
-
-SUPABASE_PROJECT_ID = os.getenv("SUPABASE_PROJECT_ID", "")
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET", "product-images")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -53,7 +96,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [DESKTOP_FRONTEND_DIR] if DESKTOP_FRONTEND_DIR.exists() else [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -67,32 +110,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 RUNNING_TESTS = "test" in sys.argv
-
-if RUNNING_TESTS or os.getenv("USE_SQLITE_FOR_TESTS", "false").lower() == "true":
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3" if RUNNING_TESTS else DATA_DIR / "fp-estoque.sqlite3",
+        "OPTIONS": {"timeout": 30},
     }
-else:
-    DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
-    if not DATABASE_URL:
-        raise RuntimeError(
-            "DATABASE_URL não foi definida. Configure a conexão PostgreSQL do Supabase no arquivo .env"
-        )    
-    if not DATABASE_URL.startswith(("postgres://", "postgresql://")):
-        raise RuntimeError("DATABASE_URL deve apontar para um banco PostgreSQL.")
-    
-    DATABASES = {
-        "default": dj_database_url.parse(
-            DATABASE_URL,
-            conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "60")),
-            conn_health_checks=True,
-        )
-    }
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"] = {"sslmode": "require"}
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -106,9 +130,13 @@ TIME_ZONE = "America/Fortaleza"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL = "/static/"
+STATIC_ROOT = DATA_DIR / "static"
+MEDIA_URL = "/media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+FILE_UPLOAD_PERMISSIONS = 0o644
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 
 CORS_ALLOWED_ORIGINS = [
     value.strip()
@@ -152,9 +180,9 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "FP Estoque API",
-    "DESCRIPTION": "API REST do sistema interno de estoque do FP Depósito de Bebidas.",
-    "VERSION": "2.0.0",
+    "TITLE": "FP Estoque API Local",
+    "DESCRIPTION": "API local do sistema de estoque do FP Depósito de Bebidas.",
+    "VERSION": "3.0.0-desktop",
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
