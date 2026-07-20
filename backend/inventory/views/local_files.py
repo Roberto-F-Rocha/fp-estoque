@@ -43,7 +43,8 @@ def upload_product_image(request):
 
     relative_path = f"products/{uuid4().hex}{extension}"
     saved_path = default_storage.save(relative_path, image)
-    public_url = request.build_absolute_uri(f"{settings.MEDIA_URL}{saved_path}")
+    media_prefix = settings.MEDIA_URL.rstrip("/")
+    public_url = f"{media_prefix}/{saved_path}"
 
     audit(
         request.user,
