@@ -15,6 +15,18 @@ def _bundle_root():
     return Path(__file__).resolve().parents[1]
 
 
+def _application_dir():
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[1]
+
+
+def _load_environment_file():
+    from dotenv import load_dotenv
+
+    load_dotenv(_application_dir() / ".env", override=False)
+
+
 def _data_dir():
     configured = os.getenv("FP_DATA_DIR", "").strip()
     if configured:
@@ -132,6 +144,7 @@ def _show_error(title: str, message: str):
 
 
 def main():
+    _load_environment_file()
     root = _bundle_root()
     data_dir = _data_dir()
     data_dir.mkdir(parents=True, exist_ok=True)
