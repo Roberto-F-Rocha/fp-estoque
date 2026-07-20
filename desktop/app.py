@@ -1,3 +1,4 @@
+import json
 import os
 import sqlite3
 import sys
@@ -102,8 +103,11 @@ def _prepare_django(data_dir: Path):
 def _health_ready(url: str):
     try:
         with urllib.request.urlopen(url, timeout=1.5) as response:
-            return response.status == 200
-    except (urllib.error.URLError, TimeoutError, OSError):
+            if response.status != 200:
+                return False
+            payload = json.loads(response.read().decode("utf-8"))
+            return payload.get("status") == "ok" and payload.get("mode") == "desktop-local"
+    except (urllib.error.URLError, TimeoutError, OSError, ValueError, json.JSONDecodeError):
         return False
 
 
