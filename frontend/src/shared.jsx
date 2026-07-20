@@ -93,7 +93,7 @@ export function getError(error) {
 export function Logo({ compact = false }) {
   return (
     <div className={`brand ${compact ? "compact" : ""}`}>
-      <img className="logo-mark" src="/fp-icon.svg" alt="FP Depósito de Bebidas" />
+      <img className="logo-mark" src={`${import.meta.env.BASE_URL}fp-icon.svg`} alt="FP Depósito de Bebidas" />
       {!compact && <div><strong>FP Estoque</strong><small>Depósito de Bebidas</small></div>}
     </div>
   );
