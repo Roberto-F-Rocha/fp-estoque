@@ -4,7 +4,8 @@ from .dashboard import dashboard
 from .desktop import desktop_setup, desktop_status, health
 from .documents import MovementViewSet, StockAdjustmentViewSet, StockEntryViewSet, StockOutputViewSet
 from .inventories import InventoryViewSet
-from .misc import forgot_password, report_catalog, report_export, report_preview, reset_password, upload_product_image
+from .local_files import upload_product_image
+from .misc import forgot_password, report_catalog, report_export, report_preview, reset_password
 from .reporting import report_xlsx_export
 
 __all__ = [
