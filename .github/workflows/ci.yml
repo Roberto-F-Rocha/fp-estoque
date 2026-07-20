@@ -1,9 +1,9 @@
-name: CI
+name: CI Desktop Local
 
 on:
   pull_request:
   push:
-    branches: [main, feat/sistema-completo]
+    branches: [main, feat/sistema-completo, feat/desktop-local]
 
 permissions:
   contents: read
@@ -15,7 +15,8 @@ jobs:
       run:
         working-directory: backend
     env:
-      USE_SQLITE_FOR_TESTS: "true"
+      FP_DESKTOP_MODE: "true"
+      FP_DATA_DIR: ${{ runner.temp }}/fp-estoque-data
       DJANGO_SECRET_KEY: ci-only-secret-key-at-least-thirty-two-characters
       DEBUG: "false"
     steps:
@@ -51,5 +52,46 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - run: npm install
       - run: npm run build
+      - run: npm run build:desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-frontend
+          path: backend/desktop_frontend
+
+  desktop-package:
+    runs-on: windows-latest
+    needs: [backend, frontend]
+    env:
+      FP_DESKTOP_MODE: "true"
+      DJANGO_SECRET_KEY: ci-only-secret-key-at-least-thirty-two-characters
+      DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-desktop.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r backend/requirements-desktop.txt
+      - name: Build desktop frontend
+        working-directory: frontend
+        run: |
+          npm install
+          npm run build:desktop
+      - name: Build Windows application
+        run: pyinstaller --noconfirm --clean desktop/fp_estoque.spec
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FP-Estoque-Desktop-Windows
+          path: dist/FP Estoque
+          if-no-files-found: error
