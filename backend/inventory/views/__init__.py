@@ -1,6 +1,7 @@
 from .alerts import AlertViewSet, AuditLogViewSet, NotificationViewSet, SystemSettingViewSet
 from .catalog import CategoryViewSet, LotViewSet, ProductViewSet, SupplierViewSet, UserViewSet
 from .dashboard import dashboard
+from .desktop import desktop_setup, desktop_status, health
 from .documents import MovementViewSet, StockAdjustmentViewSet, StockEntryViewSet, StockOutputViewSet
 from .inventories import InventoryViewSet
 from .misc import forgot_password, report_catalog, report_export, report_preview, reset_password, upload_product_image
@@ -13,7 +14,10 @@ __all__ = [
     or name
     in {
         "dashboard",
+        "desktop_setup",
+        "desktop_status",
         "forgot_password",
+        "health",
         "report_catalog",
         "report_export",
         "report_preview",
