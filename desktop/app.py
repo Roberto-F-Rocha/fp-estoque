@@ -1,5 +1,5 @@
 import os
-import shutil
+import sqlite3
 import sys
 import threading
 import time
@@ -58,11 +58,22 @@ def _backup_database(data_dir: Path):
 
     backup_dir = data_dir / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     destination = backup_dir / f"fp-estoque-{stamp}.sqlite3"
-    shutil.copy2(database, destination)
 
-    backups = sorted(backup_dir.glob("fp-estoque-*.sqlite3"), key=lambda path: path.stat().st_mtime, reverse=True)
+    source_connection = sqlite3.connect(str(database), timeout=30)
+    destination_connection = sqlite3.connect(str(destination), timeout=30)
+    try:
+        source_connection.backup(destination_connection)
+    finally:
+        destination_connection.close()
+        source_connection.close()
+
+    backups = sorted(
+        backup_dir.glob("fp-estoque-*.sqlite3"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     for old_backup in backups[30:]:
         old_backup.unlink(missing_ok=True)
 
@@ -101,7 +112,7 @@ def _start_server(host: str, port: int):
         application,
         host=host,
         port=port,
-        threads=8,
+        threads=6,
         channel_timeout=120,
         clear_untrusted_proxy_headers=True,
     )
