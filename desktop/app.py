@@ -1,10 +1,12 @@
 import json
 import os
+import re
 import sqlite3
 import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
@@ -147,6 +149,154 @@ def _show_error(title: str, message: str):
         print(f"{title}: {message}", file=sys.stderr)
 
 
+def _error_detail(error):
+    try:
+        payload = json.loads(error.read().decode("utf-8"))
+        if isinstance(payload, dict):
+            detail = payload.get("detail")
+            if detail:
+                return str(detail)
+            return " • ".join(f"{key}: {value}" for key, value in payload.items())
+    except Exception:
+        pass
+    return f"Falha HTTP {getattr(error, 'code', 'desconhecida')}."
+
+
+class DesktopApi:
+    ALLOWED_REPORT_PATHS = {
+        "/api/reports/export.pdf": ".pdf",
+        "/api/reports/export.xlsx": ".xlsx",
+        "/api/reports/daily.pdf": ".pdf",
+        "/api/reports/daily.xlsx": ".xlsx",
+    }
+
+    def __init__(self, app_url: str):
+        self.app_url = app_url
+        self.window = None
+        parsed = urllib.parse.urlparse(app_url)
+        self.allowed_origin = (parsed.scheme, parsed.hostname, parsed.port)
+
+    def bind_window(self, window):
+        self.window = window
+
+    def _validated_report_url(self, url: str):
+        absolute_url = urllib.parse.urljoin(self.app_url, str(url or ""))
+        parsed = urllib.parse.urlparse(absolute_url)
+        origin = (parsed.scheme, parsed.hostname, parsed.port)
+        if origin != self.allowed_origin:
+            raise ValueError("Endereço de relatório não permitido.")
+        extension = self.ALLOWED_REPORT_PATHS.get(parsed.path)
+        if not extension:
+            raise ValueError("Tipo de relatório não permitido.")
+        return absolute_url, extension
+
+    @staticmethod
+    def _safe_filename(filename: str, extension: str):
+        name = Path(str(filename or "relatorio")).name
+        name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", name).strip(" .")
+        if not name:
+            name = "relatorio"
+        name = name[:180]
+        if not name.lower().endswith(extension):
+            name += extension
+        return name
+
+    def _request_report(self, url: str, access_token: str):
+        headers = {"Accept": "application/octet-stream"}
+        if access_token:
+            headers["Authorization"] = f"Bearer {access_token}"
+        request = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return response.read()
+
+    def _refresh_access_token(self, refresh_token: str):
+        if not refresh_token:
+            return None
+        refresh_url = urllib.parse.urljoin(self.app_url, "api/auth/refresh/")
+        request = urllib.request.Request(
+            refresh_url,
+            data=json.dumps({"refresh": refresh_token}).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return {
+            "access": payload.get("access"),
+            "refresh": payload.get("refresh") or refresh_token,
+        }
+
+    def _choose_destination(self, filename: str, extension: str):
+        if self.window is None:
+            raise RuntimeError("A janela do aplicativo ainda não está disponível.")
+
+        import webview
+
+        downloads = Path.home() / "Downloads"
+        initial_directory = downloads if downloads.exists() else Path.home()
+        file_types = (
+            ("Documento PDF (*.pdf)",)
+            if extension == ".pdf"
+            else ("Planilha Excel (*.xlsx)",)
+        )
+
+        dialog_enum = getattr(webview, "FileDialog", None)
+        dialog_type = getattr(dialog_enum, "SAVE", None) if dialog_enum else None
+        if dialog_type is None:
+            dialog_type = getattr(webview, "SAVE_DIALOG")
+
+        selected = self.window.create_file_dialog(
+            dialog_type,
+            directory=str(initial_directory),
+            save_filename=filename,
+            file_types=file_types,
+        )
+        if not selected:
+            return None
+        selected_path = selected[0] if isinstance(selected, (tuple, list)) else selected
+        destination = Path(selected_path)
+        if destination.suffix.lower() != extension:
+            destination = destination.with_suffix(extension)
+        return destination
+
+    def save_report(self, url, filename, access_token="", refresh_token=""):
+        try:
+            report_url, extension = self._validated_report_url(url)
+            safe_filename = self._safe_filename(filename, extension)
+            destination = self._choose_destination(safe_filename, extension)
+            if destination is None:
+                return {"status": "cancelled"}
+
+            refreshed = None
+            try:
+                content = self._request_report(report_url, str(access_token or ""))
+            except urllib.error.HTTPError as error:
+                if error.code != 401:
+                    raise RuntimeError(_error_detail(error)) from error
+                refreshed = self._refresh_access_token(str(refresh_token or ""))
+                if not refreshed or not refreshed.get("access"):
+                    raise RuntimeError("Sua sessão expirou. Entre novamente no sistema.") from error
+                content = self._request_report(report_url, refreshed["access"])
+
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            temporary = destination.with_name(f".{destination.name}.tmp")
+            temporary.write_bytes(content)
+            os.replace(temporary, destination)
+
+            result = {
+                "status": "saved",
+                "path": str(destination),
+                "filename": destination.name,
+            }
+            if refreshed:
+                result.update(refreshed)
+            return result
+        except urllib.error.HTTPError as error:
+            return {"status": "error", "error": _error_detail(error)}
+        except Exception as error:
+            return {"status": "error", "error": str(error)}
+
+
 def main():
     _load_environment_file()
     root = _bundle_root()
@@ -192,9 +342,11 @@ def main():
     try:
         import webview
 
-        webview.create_window(
+        desktop_api = DesktopApi(app_url)
+        window = webview.create_window(
             "FP Estoque — Depósito de Bebidas",
             app_url,
+            js_api=desktop_api,
             width=1440,
             height=900,
             min_size=(1024, 680),
@@ -202,6 +354,7 @@ def main():
             text_select=True,
             confirm_close=False,
         )
+        desktop_api.bind_window(window)
         webview.start(
             gui="edgechromium",
             debug=os.getenv("DEBUG", "false").lower() == "true",
