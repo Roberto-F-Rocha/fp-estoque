@@ -14,6 +14,7 @@ import { AdjustmentsPage } from "./pages/adjustments.jsx";
 import { InventoriesPage } from "./pages/inventories.jsx";
 import { AlertsPage } from "./pages/alerts.jsx";
 import { ReportsPage } from "./pages/reports.jsx";
+import { ReportAuditPage } from "./pages/report_audit.jsx";
 import { UsersPage } from "./pages/users.jsx";
 import { SettingsPage } from "./pages/settings.jsx";
 
@@ -119,6 +120,7 @@ function App() {
     inventories: <InventoriesPage me={me} notify={notify} />,
     alerts: <AlertsPage me={me} notify={notify} />,
     reports: <ReportsPage notify={notify} />,
+    report_audit: <ReportAuditPage notify={notify} />,
     users: <UsersPage notify={notify} />,
     settings: <SettingsPage notify={notify} />,
   };
