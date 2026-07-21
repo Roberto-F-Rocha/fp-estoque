@@ -17,6 +17,58 @@
 .app-loading-error span { max-width: 560px; color: #d1d5db; line-height: 1.5; }
 .app-loading-error .btn { min-width: 190px; }
 
+.report-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.report-tabs > button {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: white;
+  min-width: 0;
+  padding: 15px 17px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+
+.report-tabs > button:hover { border-color: #d7ad1d; }
+.report-tabs > button.active {
+  border-color: var(--gold);
+  background: #fff9e5;
+  box-shadow: 0 0 0 3px rgba(245, 180, 0, .14);
+}
+.report-tabs svg { color: #9a7000; flex: 0 0 auto; }
+.report-tabs strong, .report-tabs small { display: block; }
+.report-tabs strong { color: #111; font-size: 15px; }
+.report-tabs small { margin-top: 3px; color: var(--muted); line-height: 1.3; }
+
+.product-presentation-preview {
+  min-height: 72px;
+  border: 1px solid #f0d16a;
+  border-radius: 11px;
+  background: #fff9e5;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+.product-presentation-preview span { color: #806000; font-size: 12px; font-weight: 750; }
+.product-presentation-preview strong { color: #111; line-height: 1.35; }
+
+.city-input-wrap { position: relative; }
+.city-input-wrap input { padding-right: 38px; }
+.city-loading-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #8b6500; }
+
+.dashboard-alerts-panel { margin-top: 18px; }
+.dashboard-alerts-panel .table-wrap { overflow-x: auto; }
+
 .audit-filter-bar { align-items: end; }
 .audit-filter-bar .field { min-width: 180px; }
 .audit-history-panel .panel-title p { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
@@ -43,6 +95,10 @@
 
 @media (max-width: 1100px) {
   .audit-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .report-tabs { grid-template-columns: 1fr; }
 }
 
 @media (max-height: 760px) and (min-width: 901px) {
