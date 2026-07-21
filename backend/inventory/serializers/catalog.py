@@ -69,19 +69,11 @@ class ProductSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data["code"] = self._automatic_code()
-        validated_data["sku"] = None
-        validated_data["barcode"] = None
-        validated_data["location"] = ""
-        validated_data["image_url"] = ""
-        validated_data["unit"] = "UN"
-        validated_data["package_quantity"] = 1
+        if not validated_data.get("code"):
+            validated_data["code"] = self._automatic_code()
+        validated_data.setdefault("unit", "UN")
+        validated_data.setdefault("package_quantity", 1)
         return super().create(validated_data)
-
-    def update(self, instance, validated_data):
-        for field in ("code", "sku", "barcode", "location", "image_url", "unit", "package_quantity"):
-            validated_data.pop(field, None)
-        return super().update(instance, validated_data)
 
     @staticmethod
     def _automatic_code():
