@@ -27,6 +27,12 @@ function reportFilename(type, format) {
   return `${safeType}-${today()}.${format}`;
 }
 
+function absoluteApiUrl(endpoint) {
+  const applicationOrigin = window.location.origin;
+  const absoluteBase = new URL(API_BASE, `${applicationOrigin}/`);
+  return new URL(endpoint, absoluteBase).toString();
+}
+
 export function ReportsPage({ notify }) {
   const [catalog, setCatalog] = useState([]);
   const [products, setProducts] = useState([]);
@@ -90,7 +96,7 @@ export function ReportsPage({ notify }) {
       const desktopSave = window.pywebview?.api?.save_report;
 
       if (desktopSave) {
-        const reportUrl = new URL(endpoint, API_BASE).toString();
+        const reportUrl = absoluteApiUrl(endpoint);
         const result = await desktopSave(
           reportUrl,
           filename,
