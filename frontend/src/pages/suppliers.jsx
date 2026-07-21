@@ -63,40 +63,51 @@ export function SuppliersPage({ notify, me }) {
   const [cities, setCities] = useState([]);
   const [loadingLocalities, setLoadingLocalities] = useState(false);
   const [localitiesLoaded, setLocalitiesLoaded] = useState(false);
+  const [localitiesAttempted, setLocalitiesAttempted] = useState(false);
+
+  async function loadLocalities() {
+    if (loadingLocalities) return;
+    setLoadingLocalities(true);
+    setLocalitiesAttempted(true);
+    try {
+      const response = await api.get("localidades/");
+      if (response.data.states?.length) setStates(response.data.states);
+      setCities(response.data.cities || []);
+      setLocalitiesLoaded(true);
+    } catch (error) {
+      notify(getError(error), "error");
+    } finally {
+      setLoadingLocalities(false);
+    }
+  }
 
   useEffect(() => {
-    if (!form || localitiesLoaded || loadingLocalities) return;
-    setLoadingLocalities(true);
-    api.get("localidades/")
-      .then((response) => {
-        if (response.data.states?.length) setStates(response.data.states);
-        setCities(response.data.cities || []);
-        setLocalitiesLoaded(true);
-      })
-      .catch((error) => {
-        notify(getError(error), "error");
-      })
-      .finally(() => setLoadingLocalities(false));
-  }, [form, localitiesLoaded, loadingLocalities, notify]);
+    if (form && !localitiesLoaded && !localitiesAttempted) loadLocalities();
+  }, [Boolean(form), localitiesLoaded, localitiesAttempted]);
 
   const citySuggestions = useMemo(() => {
     if (!form) return [];
     const query = normalize(form.city_search || form.city);
     return cities
       .filter((city) => !form.state || city.state === form.state)
-      .filter((city) => !query || normalize(city.name).includes(query) || normalize(cityLabel(city)).includes(query))
-      .slice(0, 500);
+      .filter((city) => !query || normalize(city.name).includes(query) || normalize(cityLabel(city)).includes(query));
   }, [cities, form]);
 
   function change(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
+  function prepareLocalities() {
+    if (!localitiesLoaded) setLocalitiesAttempted(false);
+  }
+
   function openNew() {
+    prepareLocalities();
     setForm({ ...supplierInitial });
   }
 
   function openEdit(row) {
+    prepareLocalities();
     setForm({
       ...supplierInitial,
       ...row,
@@ -107,7 +118,9 @@ export function SuppliersPage({ notify, me }) {
 
   function changeState(value) {
     setForm((current) => {
-      const selectedCity = cities.find((city) => normalize(city.name) === normalize(current.city));
+      const selectedCity = cities.find(
+        (city) => normalize(city.name) === normalize(current.city) && city.state === current.state,
+      );
       const keepCity = selectedCity && selectedCity.state === value;
       return {
         ...current,
@@ -287,7 +300,13 @@ export function SuppliersPage({ notify, me }) {
 
             <Field
               label="Cidade"
-              hint={loadingLocalities ? "Carregando cidades do IBGE..." : "Digite parte do nome ou abra a lista. Ao selecionar a cidade, a UF será preenchida."}
+              hint={
+                loadingLocalities
+                  ? "Carregando cidades do IBGE..."
+                  : localitiesLoaded
+                    ? "Digite parte do nome ou abra a lista. Ao selecionar a cidade, a UF será preenchida."
+                    : "A lista não foi carregada. Use o botão abaixo para tentar novamente."
+              }
             >
               <div className="city-input-wrap">
                 <input
@@ -305,6 +324,11 @@ export function SuppliersPage({ notify, me }) {
                   <option key={city.id} value={cityLabel(city)} />
                 ))}
               </datalist>
+              {!loadingLocalities && !localitiesLoaded && (
+                <button type="button" className="localities-retry" onClick={loadLocalities}>
+                  <RefreshCw size={14} /> Carregar cidades novamente
+                </button>
+              )}
             </Field>
 
             <Field label="Observações">
