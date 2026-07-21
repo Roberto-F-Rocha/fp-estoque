@@ -11,7 +11,6 @@ import {
   getError,
   Button,
   Field,
-  EmptyState,
   DataTable,
   StatusBadge,
   AlertTriangle,
@@ -25,20 +24,11 @@ import {
   Package,
   RefreshCw,
   X,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
 } from "../shared.jsx";
 import { MetricCard } from "../layout.jsx";
 
 const FILTER_STORAGE_KEY = "fp_dashboard_filters";
+const VIEW_STORAGE_KEY = "fp_dashboard_view";
 const VALID_PERIODS = new Set(["today", "7d", "month", "custom"]);
 
 function defaultFilters() {
@@ -76,13 +66,19 @@ const fmtPercent = (value) => `${asNumber(value).toLocaleString("pt-BR", { maxim
 export function DashboardPage() {
   const [data, setData] = useState(null);
   const [filters, setFilters] = useState(loadSavedFilters);
-  const [dashboardView, setDashboardView] = useState("sales");
+  const [dashboardView, setDashboardView] = useState(
+    () => localStorage.getItem(VIEW_STORAGE_KEY) || "sales",
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
   }, [filters]);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_STORAGE_KEY, dashboardView);
+  }, [dashboardView]);
 
   useEffect(() => {
     let active = true;
@@ -123,42 +119,16 @@ export function DashboardPage() {
   const categories = data?.filter_options?.categories || [];
   const allProducts = data?.filter_options?.products || [];
   const availableProducts = useMemo(
-    () =>
-      filters.category
-        ? allProducts.filter((product) => String(product.category_id) === String(filters.category))
-        : allProducts,
+    () => filters.category
+      ? allProducts.filter((product) => String(product.category_id) === String(filters.category))
+      : allProducts,
     [allProducts, filters.category],
-  );
-
-  const productChart = useMemo(
-    () =>
-      (data?.charts?.product_sales || []).map((row) => ({
-        ...row,
-        quantity: asNumber(row.quantity),
-        revenue: asNumber(row.revenue),
-        profit: asNumber(row.profit),
-        stock: asNumber(row.stock),
-      })),
-    [data],
-  );
-
-  const salesChart = useMemo(
-    () =>
-      (data?.charts?.sales || []).map((row) => ({
-        ...row,
-        quantity: asNumber(row.quantity),
-        revenue: asNumber(row.revenue),
-        cost: asNumber(row.cost),
-        profit: asNumber(row.profit),
-      })),
-    [data],
   );
 
   function changeCategory(category) {
     const productStillValid = allProducts.some(
-      (product) =>
-        String(product.id) === String(filters.product) &&
-        (!category || String(product.category_id) === String(category)),
+      (product) => String(product.id) === String(filters.product)
+        && (!category || String(product.category_id) === String(category)),
     );
     setFilters((current) => ({
       ...current,
@@ -173,20 +143,19 @@ export function DashboardPage() {
   }
 
   if (!data && loading) {
-    return <div className="loading"><RefreshCw className="spin" /> Carregando dashboard...</div>;
+    return <div className="loading"><RefreshCw className="spin" /> Carregando painel...</div>;
   }
 
   if (!data) {
-    return <div className="form-error">{error || "Não foi possível carregar a dashboard."}</div>;
+    return <div className="form-error">{error || "Não foi possível carregar o painel."}</div>;
   }
 
   const sales = data.sales || {};
-  const hasSales = asNumber(sales.quantity_sold) > 0;
   const isSalesView = dashboardView === "sales";
 
   return (
     <>
-      <section className="dashboard-view-switch" aria-label="Escolha a visualização da dashboard">
+      <section className="dashboard-view-switch" aria-label="Escolha a visualização do painel">
         <button
           type="button"
           className={`dashboard-view-option ${isSalesView ? "active" : ""}`}
@@ -197,7 +166,7 @@ export function DashboardPage() {
             <CircleDollarSign size={24} />
           </span>
           <span>
-            <strong>Desempenho de vendas</strong>
+            <strong>Vendas e lucro</strong>
             <small>Vendas, custos, lucro e margem no período escolhido.</small>
           </span>
         </button>
@@ -212,7 +181,7 @@ export function DashboardPage() {
             <Boxes size={24} />
           </span>
           <span>
-            <strong>Posição atual do estoque</strong>
+            <strong>Estoque atual</strong>
             <small>Saldo disponível, valores, potencial de venda e alertas.</small>
           </span>
         </button>
@@ -221,11 +190,11 @@ export function DashboardPage() {
       <section className="panel dashboard-filter-panel">
         <div className="dashboard-filter-heading">
           <div>
-            <h3>{isSalesView ? "Filtros do desempenho de vendas" : "Filtros da posição de estoque"}</h3>
+            <h3>{isSalesView ? "Filtros de vendas e lucro" : "Filtros do estoque atual"}</h3>
             <p>
               {isSalesView
-                ? "Escolha o período, a categoria ou um produto específico para analisar as vendas."
-                : "Escolha uma categoria ou um produto específico para consultar a posição atual do estoque."}
+                ? "Escolha o período, a categoria ou um produto para analisar o resultado comercial."
+                : "Escolha uma categoria ou um produto para consultar a posição atual do estoque."}
             </p>
           </div>
           <Button type="button" variant="secondary" icon={X} onClick={clearFilters}>
@@ -283,9 +252,7 @@ export function DashboardPage() {
             >
               <option value="">Todos os produtos</option>
               {availableProducts.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.code} — {product.name}
-                </option>
+                <option key={product.id} value={product.id}>{product.name}</option>
               ))}
             </select>
           </Field>
@@ -375,11 +342,10 @@ export function DashboardPage() {
                   render: (row) => (
                     <div className="dashboard-product-name">
                       <strong>{row.name}</strong>
-                      <small>{row.code}</small>
+                      <small>{row.category}</small>
                     </div>
                   ),
                 },
-                { key: "category", label: "Categoria" },
                 { key: "unit_cost", label: "Custo unitário", render: (row) => fmtMoney(row.unit_cost) },
                 { key: "unit_sale_price", label: "Preço de venda", render: (row) => fmtMoney(row.unit_sale_price) },
                 { key: "quantity_sold", label: "Quantidade vendida", render: (row) => fmtQty(row.quantity_sold) },
@@ -389,56 +355,6 @@ export function DashboardPage() {
               ]}
             />
           </section>
-
-          <div className="dashboard-grid">
-            <section className="panel chart-panel">
-              <div className="panel-title dashboard-panel-title">
-                <div>
-                  <h3>Vendas e lucro por produto</h3>
-                  <p>Produtos com maior valor vendido no período.</p>
-                </div>
-              </div>
-              {productChart.some((row) => row.revenue > 0) ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={productChart} margin={{ bottom: 58 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" interval={0} angle={-24} textAnchor="end" height={75} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => fmtMoney(value)} />
-                    <Legend />
-                    <Bar dataKey="revenue" name="Valor vendido" fill="#f5b400" />
-                    <Bar dataKey="profit" name="Lucro bruto" fill="#207a45" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState title="Nenhuma venda no período" text="Confirme uma saída com o motivo Retirada para comercialização." />
-              )}
-            </section>
-
-            <section className="panel chart-panel">
-              <div className="panel-title dashboard-panel-title">
-                <div>
-                  <h3>Evolução das vendas</h3>
-                  <p>Valor vendido e lucro bruto por dia.</p>
-                </div>
-              </div>
-              {hasSales ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <LineChart data={salesChart}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => fmtMoney(value)} />
-                    <Legend />
-                    <Line type="monotone" dataKey="revenue" name="Valor vendido" stroke="#f5b400" strokeWidth={3} />
-                    <Line type="monotone" dataKey="profit" name="Lucro bruto" stroke="#207a45" strokeWidth={3} />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState title="Nenhuma venda no período" text="Altere o período ou os filtros para consultar outras vendas." />
-              )}
-            </section>
-          </div>
         </div>
       ) : (
         <div className="dashboard-view-content" key="stock-dashboard">
@@ -477,29 +393,10 @@ export function DashboardPage() {
               tone="success"
               detail="Potencial de venda menos custo"
             />
-            <MetricCard
-              label="Produtos analisados"
-              value={data.products}
-              icon={Package}
-            />
-            <MetricCard
-              label="Estoque baixo"
-              value={data.low_stock}
-              icon={AlertTriangle}
-              tone="warning"
-            />
-            <MetricCard
-              label="Sem estoque"
-              value={data.out_of_stock}
-              icon={Archive}
-              tone="danger"
-            />
-            <MetricCard
-              label="Próximos do vencimento"
-              value={data.expiring}
-              icon={ClipboardCheck}
-              tone="warning"
-            />
+            <MetricCard label="Produtos analisados" value={data.products} icon={Package} />
+            <MetricCard label="Estoque baixo" value={data.low_stock} icon={AlertTriangle} tone="warning" />
+            <MetricCard label="Sem estoque" value={data.out_of_stock} icon={Archive} tone="danger" />
+            <MetricCard label="Próximos do vencimento" value={data.expiring} icon={ClipboardCheck} tone="warning" />
           </div>
 
           <section className="panel dashboard-performance-panel">
@@ -520,11 +417,10 @@ export function DashboardPage() {
                   render: (row) => (
                     <div className="dashboard-product-name">
                       <strong>{row.name}</strong>
-                      <small>{row.code}</small>
+                      <small>{row.category}</small>
                     </div>
                   ),
                 },
-                { key: "category", label: "Categoria" },
                 { key: "current_stock", label: "Estoque atual", render: (row) => <strong>{fmtQty(row.current_stock)}</strong> },
                 { key: "unit_cost", label: "Custo unitário", render: (row) => fmtMoney(row.unit_cost) },
                 { key: "stock_cost_value", label: "Valor a custo", render: (row) => fmtMoney(row.stock_cost_value) },
@@ -535,46 +431,23 @@ export function DashboardPage() {
             />
           </section>
 
-          <div className="dashboard-grid">
-            <section className="panel chart-panel">
-              <div className="panel-title dashboard-panel-title">
-                <div>
-                  <h3>Quantidade em estoque por produto</h3>
-                  <p>Produtos com maior quantidade disponível no filtro atual.</p>
-                </div>
+          <section className="panel dashboard-performance-panel dashboard-alerts-panel">
+            <div className="panel-title dashboard-panel-title">
+              <div>
+                <h3>Alertas atuais do estoque</h3>
+                <p>Situações que exigem atenção nos produtos selecionados.</p>
               </div>
-              {productChart.some((row) => row.stock > 0) ? (
-                <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={productChart} margin={{ bottom: 58 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" interval={0} angle={-24} textAnchor="end" height={75} />
-                    <YAxis />
-                    <Tooltip formatter={(value) => fmtQty(value)} />
-                    <Bar dataKey="stock" name="Estoque disponível" fill="#f5b400" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <EmptyState title="Nenhum estoque disponível" text="Os produtos do filtro selecionado estão sem saldo disponível." />
-              )}
-            </section>
-
-            <section className="panel">
-              <div className="panel-title dashboard-panel-title">
-                <div>
-                  <h3>Alertas atuais do estoque</h3>
-                  <p>Situações que exigem atenção nos produtos selecionados.</p>
-                </div>
-              </div>
-              <DataTable
-                rows={data.alerts}
-                columns={[
-                  { key: "level", label: "Nível", render: (row) => <StatusBadge value={row.level} label={row.level_display} /> },
-                  { key: "product_name", label: "Produto" },
-                  { key: "message", label: "Mensagem" },
-                ]}
-              />
-            </section>
-          </div>
+            </div>
+            <DataTable
+              rows={data.alerts || []}
+              emptyText="Nenhum alerta ativo para os produtos selecionados."
+              columns={[
+                { key: "level", label: "Nível", render: (row) => <StatusBadge value={row.level} label={row.level_display} /> },
+                { key: "product_name", label: "Produto" },
+                { key: "message", label: "Mensagem" },
+              ]}
+            />
+          </section>
         </div>
       )}
     </>
