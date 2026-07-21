@@ -4,6 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 
@@ -22,7 +23,7 @@ def _safe_filename(report_type: str, extension: str):
     name = re.sub(r"[^a-zA-Z0-9_-]+", "-", str(report_type or "relatorio")).strip("-")
     if not name:
         name = "relatorio"
-    return f"{name}-{__import__('django').utils.timezone.localdate().isoformat()}{extension}"
+    return f"{name}-{timezone.localdate().isoformat()}{extension}"
 
 
 def _downloads_directory():
