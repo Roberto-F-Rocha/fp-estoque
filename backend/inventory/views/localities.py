@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -99,7 +99,7 @@ def _cache_is_fresh(payload):
     if not updated_at:
         return False
     try:
-        updated = timezone.datetime.fromisoformat(updated_at)
+        updated = datetime.fromisoformat(updated_at)
         if timezone.is_naive(updated):
             updated = timezone.make_aware(updated)
     except (TypeError, ValueError):
