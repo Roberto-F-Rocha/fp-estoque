@@ -11,6 +11,14 @@ from .constants import REPORT_TYPES
 from .daily import daily_data
 
 
+LOT_STATUS_LABELS = {
+    "AVAILABLE": "Disponível",
+    "EMPTY": "Esgotado",
+    "EXPIRED": "Vencido",
+    "INACTIVE": "Inativo",
+}
+
+
 def generic_report_data(report_type, params, user):
     start, end, start_dt, end_dt = report_period(params)
     title = REPORT_TYPES.get(report_type)
@@ -41,9 +49,9 @@ def generic_report_data(report_type, params, user):
             situation = "Sem estoque" if product.stock <= 0 else "Estoque baixo" if product.low_stock else "Normal"
             rows.append([product.code, product.name, product.category.name, product.brand or "-", decimal_text(product.stock), decimal_text(product.minimum_stock), decimal_text(product.maximum_stock), money(product.cost_price), money(product.stock_value), situation])
         summary = {
-            "products": len(rows),
-            "total_quantity": decimal_text(sum((product.stock for product in products), Decimal("0"))),
-            "total_value": money(sum((product.stock_value for product in products), Decimal("0"))),
+            "Produtos": len(rows),
+            "Quantidade total": decimal_text(sum((product.stock for product in products), Decimal("0"))),
+            "Valor total": money(sum((product.stock_value for product in products), Decimal("0"))),
         }
 
     elif report_type in {"lot_quantity", "expiring", "expired"}:
@@ -59,8 +67,11 @@ def generic_report_data(report_type, params, user):
             lots = lots.filter(expiration_date__lt=timezone.localdate())
         columns = ["Produto", "Código", "Lote", "Fornecedor", "Quantidade", "Entrada", "Fabricação", "Validade", "Custo", "Situação"]
         for lot in lots.order_by(F("expiration_date").asc(nulls_last=True), "product__name"):
-            rows.append([lot.product.name, lot.product.code, lot.number, lot.supplier.name if lot.supplier else "-", decimal_text(lot.quantity), lot.entry_date.strftime("%d/%m/%Y"), lot.manufacturing_date.strftime("%d/%m/%Y") if lot.manufacturing_date else "-", lot.expiration_date.strftime("%d/%m/%Y") if lot.expiration_date else "-", money(lot.cost_price), lot.status])
-        summary = {"lots": len(rows), "total_quantity": decimal_text(sum((lot.quantity for lot in lots), Decimal("0")))}
+            rows.append([lot.product.name, lot.product.code, lot.number, lot.supplier.name if lot.supplier else "-", decimal_text(lot.quantity), lot.entry_date.strftime("%d/%m/%Y"), lot.manufacturing_date.strftime("%d/%m/%Y") if lot.manufacturing_date else "-", lot.expiration_date.strftime("%d/%m/%Y") if lot.expiration_date else "-", money(lot.cost_price), LOT_STATUS_LABELS.get(lot.status, lot.status)])
+        summary = {
+            "Lotes": len(rows),
+            "Quantidade total": decimal_text(sum((lot.quantity for lot in lots), Decimal("0"))),
+        }
 
     elif report_type in {"entries", "entries_by_supplier"}:
         entries = StockEntry.objects.select_related("supplier", "user").filter(entry_date__range=(start_dt, end_dt))
@@ -69,35 +80,44 @@ def generic_report_data(report_type, params, user):
         columns = ["Número", "Data", "Fornecedor", "Nota fiscal", "Itens", "Valor total", "Situação", "Responsável", "Observações"]
         for entry in entries.annotate(items_count=Count("items")):
             rows.append([entry.number, timezone.localtime(entry.entry_date).strftime("%d/%m/%Y %H:%M"), entry.supplier.name, entry.invoice_number or "-", entry.items_count, money(entry.total_value), entry.get_status_display(), entry.user.get_full_name() or entry.user.username, entry.notes or "-"])
-        summary = {"entries": len(rows), "total_value": money(entries.aggregate(v=Sum("total_value"))["v"] or 0)}
+        summary = {
+            "Entradas": len(rows),
+            "Valor total": money(entries.aggregate(v=Sum("total_value"))["v"] or 0),
+        }
 
     elif report_type == "outputs":
         outputs = StockOutput.objects.select_related("user").filter(output_date__range=(start_dt, end_dt))
         columns = ["Número", "Data", "Motivo", "Itens", "Situação", "Responsável", "Observações"]
         for output in outputs.annotate(items_count=Count("items")):
             rows.append([output.number, timezone.localtime(output.output_date).strftime("%d/%m/%Y %H:%M"), output.get_reason_display(), output.items_count, output.get_status_display(), output.user.get_full_name() or output.user.username, output.notes or "-"])
-        summary = {"outputs": len(rows)}
+        summary = {"Saídas": len(rows)}
 
     elif report_type in {"movement_history", "movements_by_user", "movements_by_product"}:
         movements, _ = movement_queryset(params)
         columns = ["Data/hora", "Tipo", "Produto", "Código", "Lote", "Anterior", "Quantidade", "Final", "Valor", "Usuário", "Documento", "Motivo"]
         for movement in movements:
             rows.append([timezone.localtime(movement.created_at).strftime("%d/%m/%Y %H:%M"), movement.get_type_display(), movement.product.name, movement.product.code, movement.lot.number if movement.lot else "-", decimal_text(movement.previous_stock), decimal_text(movement.quantity), decimal_text(movement.final_stock), money(movement.total_value), movement.user.get_full_name() or movement.user.username, movement.document or "-", movement.reason or "-"])
-        summary = {"movements": len(rows), "total_value": money(sum((movement.total_value for movement in movements), Decimal("0")))}
+        summary = {
+            "Movimentações": len(rows),
+            "Valor total": money(sum((movement.total_value for movement in movements), Decimal("0"))),
+        }
 
     elif report_type == "inventory_value_category":
         categories = products.values("category__name").annotate(quantity=Coalesce(Sum("stock"), Decimal("0")), value=Coalesce(Sum(F("stock") * F("cost_price")), Decimal("0"))).order_by("category__name")
         columns = ["Categoria", "Quantidade", "Valor estimado"]
         for item in categories:
             rows.append([item["category__name"], decimal_text(item["quantity"]), money(item["value"])])
-        summary = {"categories": len(rows), "total_value": money(sum((Decimal(item["value"]) for item in categories), Decimal("0")))}
+        summary = {
+            "Categorias": len(rows),
+            "Valor total": money(sum((Decimal(item["value"]) for item in categories), Decimal("0"))),
+        }
 
     elif report_type == "inventory_divergences":
         items = InventoryItem.objects.select_related("inventory", "product", "inventory__user").filter(inventory__started_at__range=(start_dt, end_dt)).exclude(system_quantity=F("counted_quantity"))
         columns = ["Inventário", "Data", "Produto", "Registrado", "Contado", "Divergência", "Ajustado", "Responsável", "Justificativa"]
         for item in items:
             rows.append([item.inventory.number, timezone.localtime(item.inventory.started_at).strftime("%d/%m/%Y"), item.product.name, decimal_text(item.system_quantity), decimal_text(item.counted_quantity), decimal_text(item.difference), "Sim" if item.adjusted else "Não", item.inventory.user.get_full_name() or item.inventory.user.username, item.justification or "-"])
-        summary = {"divergences": len(rows)}
+        summary = {"Divergências": len(rows)}
 
     return {
         "report_type": report_type,
