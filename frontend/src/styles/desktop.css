@@ -65,6 +65,19 @@
 .city-input-wrap { position: relative; }
 .city-input-wrap input { padding-right: 38px; }
 .city-loading-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #8b6500; }
+.localities-retry {
+  width: max-content;
+  border: 0;
+  background: transparent;
+  color: #8b6500;
+  padding: 3px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 750;
+}
+.localities-retry:hover { text-decoration: underline; }
 
 .dashboard-alerts-panel { margin-top: 18px; }
 .dashboard-alerts-panel .table-wrap { overflow-x: auto; }
