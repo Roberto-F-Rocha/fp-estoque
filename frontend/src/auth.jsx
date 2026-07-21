@@ -54,7 +54,7 @@ export function Login({ onLogin }) {
     <main className="login-page">
       <div className="login-accent" />
       <section className="login-showcase" aria-label="FP Depósito de Bebidas">
-        <img src="/fp-logo.svg" alt="Logomarca do FP Depósito de Bebidas" />
+        <img src="/fp-logo.png" alt="Logomarca do FP Depósito de Bebidas" />
       </section>
       <form className="login-card" onSubmit={submit}>
         <Logo />
