@@ -77,6 +77,9 @@ if RUNNING_TESTS or os.getenv("USE_SQLITE_FOR_TESTS", "false").lower() == "true"
     }
 else:
     DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+    
+    print("DATABASE_URL =", repr(DATABASE_URL))
+
     if not DATABASE_URL:
         raise RuntimeError(
             "DATABASE_URL não foi definida. Configure a conexão PostgreSQL do Supabase no arquivo .env"
