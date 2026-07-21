@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from .base import TimeStamped
 
+
 class Category(TimeStamped):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
@@ -43,6 +44,13 @@ class Supplier(TimeStamped):
 
 
 class Product(TimeStamped):
+    MILLILITER = "ML"
+    LITER = "L"
+    VOLUME_UNITS = [
+        (MILLILITER, "Mililitro (mL)"),
+        (LITER, "Litro (L)"),
+    ]
+
     code = models.CharField(max_length=50, unique=True)
     sku = models.CharField(max_length=80, unique=True, blank=True, null=True)
     barcode = models.CharField(max_length=80, unique=True, blank=True, null=True)
@@ -60,6 +68,12 @@ class Product(TimeStamped):
     )
     brand = models.CharField(max_length=100, blank=True)
     package_type = models.CharField(max_length=60, blank=True)
+    volume = models.DecimalField(max_digits=10, decimal_places=3, default=1)
+    volume_unit = models.CharField(
+        max_length=2,
+        choices=VOLUME_UNITS,
+        default=LITER,
+    )
     unit = models.CharField(max_length=20, default="UN")
     package_quantity = models.DecimalField(
         max_digits=12, decimal_places=3, default=1
@@ -101,6 +115,12 @@ class Product(TimeStamped):
     @property
     def stock_value(self):
         return self.stock * self.cost_price
+
+    @property
+    def volume_label(self):
+        value = format(self.volume, "f").rstrip("0").rstrip(".") or "0"
+        unit = "mL" if self.volume_unit == self.MILLILITER else "L"
+        return f"{value} {unit}"
 
     def __str__(self):
         return self.name
@@ -165,5 +185,3 @@ class Lot(TimeStamped):
 
     def __str__(self):
         return f"{self.product} — lote {self.number}"
-
-
