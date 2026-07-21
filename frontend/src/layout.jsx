@@ -1,7 +1,7 @@
 import { React, useEffect, useMemo, useState, api, unwrap, fmtMoney, fmtQty, fmtDate, today, getError, Logo, Button, Modal, Toast, Field, EmptyState, Pagination, DataTable, StatusBadge, AlertTriangle, Archive, ArrowDownToLine, ArrowUpFromLine, BarChart3, Bell, Boxes, Check, ChevronDown, CircleDollarSign, ClipboardCheck, Eye, EyeOff, FileDown, FileText, Gauge, History, Layers3, LogOut, Menu, Package, Pencil, Plus, RefreshCw, Search, Settings, ShieldCheck, SlidersHorizontal, Trash2, Truck, UserCog, Users, Warehouse, X, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "./shared.jsx";
 
 const menuItems = [
-  ["dashboard", Gauge, "Dashboard", null, "Controle interno • dados em tempo real"],
+  ["dashboard", Gauge, "Painel", null, "Controle interno • dados em tempo real"],
   ["products", Package, "Produtos", null, "Cadastre, consulte e mantenha o catálogo do estoque."],
   ["categories", Layers3, "Categorias", null, "Organize os produtos por grupos."],
   ["suppliers", Truck, "Fornecedores", null, "Dados cadastrais, contatos e histórico de recebimentos."],
@@ -12,8 +12,7 @@ const menuItems = [
   ["adjustments", SlidersHorizontal, "Ajustes", "admin", "Correções autorizadas com justificativa obrigatória e histórico auditável."],
   ["inventories", ClipboardCheck, "Inventários", null, "Conte os produtos, identifique sobras e faltas e gere os ajustes com rastreabilidade."],
   ["alerts", AlertTriangle, "Alertas", null, "Estoque mínimo, falta de produtos, validade e divergências."],
-  ["reports", FileText, "Relatórios", null, "Visualize os dados reais do banco antes de exportar em PDF ou Excel (XLSX)."],
-  ["report_audit", ShieldCheck, "Ouvidoria de relatórios", "admin", "Consulte todas as solicitações de PDF e Excel e abra diretamente os arquivos gerados."],
+  ["reports", FileText, "Relatórios", null, "Gere documentos e consulte o histórico de solicitações em um único lugar."],
   ["users", Users, "Usuários", "admin", "Cadastre usuários e defina diretamente o perfil de acesso de cada pessoa."],
   ["settings", Settings, "Configurações", "admin", "Parâmetros administrativos do estoque e dos alertas."],
 ];
@@ -53,16 +52,16 @@ export function Shell({ me, page, setPage, onLogout, children, notifications, on
             <div className="notification-wrap">
               <button className="icon-btn bell" onClick={() => setShowNotifications(!showNotifications)}>
                 <Bell size={20} />
-                {notifications?.filter((n) => !n.read).length > 0 && <span>{notifications.filter((n) => !n.read).length}</span>}
+                {notifications?.filter((notification) => !notification.read).length > 0 && <span>{notifications.filter((notification) => !notification.read).length}</span>}
               </button>
               {showNotifications && (
                 <div className="notification-popover">
                   <div className="popover-header"><strong>Notificações</strong><button onClick={onRefreshNotifications}><RefreshCw size={15} /></button></div>
-                  {notifications?.length ? notifications.slice(0, 8).map((n) => (
-                    <div key={n.id} className={`notification-item ${n.read ? "read" : ""}`}>
-                      <StatusBadge value={n.level} label={n.title} />
-                      <p>{n.message}</p>
-                      <small>{fmtDate(n.created_at)}</small>
+                  {notifications?.length ? notifications.slice(0, 8).map((notification) => (
+                    <div key={notification.id} className={`notification-item ${notification.read ? "read" : ""}`}>
+                      <StatusBadge value={notification.level} label={notification.title} />
+                      <p>{notification.message}</p>
+                      <small>{fmtDate(notification.created_at)}</small>
                     </div>
                   )) : <p className="muted padded">Nenhuma notificação.</p>}
                 </div>
