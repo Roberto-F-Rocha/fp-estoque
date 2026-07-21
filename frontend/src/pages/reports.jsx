@@ -79,7 +79,10 @@ export function ReportsPage({ notify }) {
         format,
         filters,
       });
-      notify(`Relatório salvo com sucesso em ${response.data.path}.`);
+      const message = response.data.auto_opened
+        ? `${response.data.detail} Arquivo: ${response.data.path}`
+        : `${response.data.detail} Arquivo salvo em: ${response.data.path}`;
+      notify(message, response.data.auto_opened ? "success" : "error");
     } catch (error) {
       notify(getError(error), "error");
     } finally {
