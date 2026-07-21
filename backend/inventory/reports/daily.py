@@ -63,16 +63,16 @@ def daily_data(params, user):
         })
 
     summary = {
-        "total_movements": qs.count(),
-        "entries": entries.count(),
-        "outputs": outputs.count(),
-        "adjustments_positive": adj_pos.count(),
-        "adjustments_negative": adj_neg.count(),
-        "products_moved": products_moved,
-        "entry_value": money(entry_value),
-        "output_value": money(output_value),
-        "end_inventory_value": money(end_value),
-        "cancelled_or_reversed": qs.filter(Q(reversed=True) | Q(type__in=[Movement.REVERSAL_IN, Movement.REVERSAL_OUT])).count(),
+        "Total de movimentações": qs.count(),
+        "Entradas": entries.count(),
+        "Saídas": outputs.count(),
+        "Ajustes positivos": adj_pos.count(),
+        "Ajustes negativos": adj_neg.count(),
+        "Produtos movimentados": products_moved,
+        "Valor das entradas": money(entry_value),
+        "Valor das saídas": money(output_value),
+        "Valor do estoque ao final": money(end_value),
+        "Canceladas ou estornadas": qs.filter(Q(reversed=True) | Q(type__in=[Movement.REVERSAL_IN, Movement.REVERSAL_OUT])).count(),
     }
     sections = {
         "entries": [row for row in rows if row["type"] == "Entrada"],
