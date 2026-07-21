@@ -2,6 +2,7 @@ import {
   React,
   useEffect,
   useState,
+  API_BASE,
   api,
   unwrap,
   today,
@@ -16,6 +17,15 @@ import {
   Eye,
 } from "../shared.jsx";
 import { PageHeader } from "../layout.jsx";
+
+function reportFilename(type, format) {
+  const safeType = String(type || "relatorio")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "relatorio";
+  return `${safeType}-${today()}.${format}`;
+}
 
 export function ReportsPage({ notify }) {
   const [catalog, setCatalog] = useState([]);
@@ -40,6 +50,7 @@ export function ReportsPage({ notify }) {
   });
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -72,19 +83,50 @@ export function ReportsPage({ notify }) {
   }
 
   async function download(format) {
+    setDownloading(format);
     try {
-      const response = await api.get(`reports/export.${format}`, {
+      const endpoint = `reports/export.${format}`;
+      const filename = reportFilename(filters.type, format);
+      const desktopSave = window.pywebview?.api?.save_report;
+
+      if (desktopSave) {
+        const reportUrl = new URL(endpoint, API_BASE).toString();
+        const result = await desktopSave(
+          reportUrl,
+          filename,
+          localStorage.getItem("fp_access") || "",
+          localStorage.getItem("fp_refresh") || "",
+        );
+
+        if (result?.access) localStorage.setItem("fp_access", result.access);
+        if (result?.refresh) localStorage.setItem("fp_refresh", result.refresh);
+        if (result?.status === "cancelled") return;
+        if (result?.status !== "saved") {
+          throw new Error(result?.error || "Não foi possível salvar o relatório.");
+        }
+
+        notify(`Relatório salvo com sucesso em ${result.path}.`);
+        return;
+      }
+
+      const response = await api.get(endpoint, {
         params: filters,
         responseType: "blob",
       });
       const url = URL.createObjectURL(response.data);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `${filters.type}-${today()}.${format}`;
+      anchor.download = filename;
+      anchor.style.display = "none";
+      document.body.appendChild(anchor);
       anchor.click();
-      URL.revokeObjectURL(url);
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+      notify("Relatório gerado e enviado para download.");
     } catch (error) {
-      notify(getError(error), "error");
+      notify(error?.message || getError(error), "error");
+    } finally {
+      setDownloading("");
     }
   }
 
@@ -97,12 +139,16 @@ export function ReportsPage({ notify }) {
               variant="secondary"
               icon={FileDown}
               onClick={() => download("xlsx")}
-              disabled={!preview}
+              disabled={!preview || Boolean(downloading)}
             >
-              Baixar Excel
+              {downloading === "xlsx" ? "Salvando Excel..." : "Baixar Excel"}
             </Button>
-            <Button icon={FileText} onClick={() => download("pdf")} disabled={!preview}>
-              Baixar PDF
+            <Button
+              icon={FileText}
+              onClick={() => download("pdf")}
+              disabled={!preview || Boolean(downloading)}
+            >
+              {downloading === "pdf" ? "Salvando PDF..." : "Baixar PDF"}
             </Button>
           </>
         }
