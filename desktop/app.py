@@ -172,12 +172,8 @@ class DesktopApi:
 
     def __init__(self, app_url: str):
         self.app_url = app_url
-        self.window = None
         parsed = urllib.parse.urlparse(app_url)
         self.allowed_origin = (parsed.scheme, parsed.hostname, parsed.port)
-
-    def bind_window(self, window):
-        self.window = window
 
     def _validated_report_url(self, url: str):
         absolute_url = urllib.parse.urljoin(self.app_url, str(url or ""))
@@ -200,6 +196,28 @@ class DesktopApi:
         if not name.lower().endswith(extension):
             name += extension
         return name
+
+    @staticmethod
+    def _downloads_directory():
+        downloads = Path.home() / "Downloads"
+        downloads.mkdir(parents=True, exist_ok=True)
+        return downloads
+
+    @classmethod
+    def _available_destination(cls, filename: str):
+        directory = cls._downloads_directory()
+        candidate = directory / filename
+        if not candidate.exists():
+            return candidate
+
+        stem = candidate.stem
+        suffix = candidate.suffix
+        counter = 1
+        while True:
+            alternative = directory / f"{stem} ({counter}){suffix}"
+            if not alternative.exists():
+                return alternative
+            counter += 1
 
     def _request_report(self, url: str, access_token: str):
         headers = {"Accept": "application/octet-stream"}
@@ -226,46 +244,11 @@ class DesktopApi:
             "refresh": payload.get("refresh") or refresh_token,
         }
 
-    def _choose_destination(self, filename: str, extension: str):
-        if self.window is None:
-            raise RuntimeError("A janela do aplicativo ainda não está disponível.")
-
-        import webview
-
-        downloads = Path.home() / "Downloads"
-        initial_directory = downloads if downloads.exists() else Path.home()
-        file_types = (
-            ("Documento PDF (*.pdf)",)
-            if extension == ".pdf"
-            else ("Planilha Excel (*.xlsx)",)
-        )
-
-        dialog_enum = getattr(webview, "FileDialog", None)
-        dialog_type = getattr(dialog_enum, "SAVE", None) if dialog_enum else None
-        if dialog_type is None:
-            dialog_type = getattr(webview, "SAVE_DIALOG")
-
-        selected = self.window.create_file_dialog(
-            dialog_type,
-            directory=str(initial_directory),
-            save_filename=filename,
-            file_types=file_types,
-        )
-        if not selected:
-            return None
-        selected_path = selected[0] if isinstance(selected, (tuple, list)) else selected
-        destination = Path(selected_path)
-        if destination.suffix.lower() != extension:
-            destination = destination.with_suffix(extension)
-        return destination
-
     def save_report(self, url, filename, access_token="", refresh_token=""):
         try:
             report_url, extension = self._validated_report_url(url)
             safe_filename = self._safe_filename(filename, extension)
-            destination = self._choose_destination(safe_filename, extension)
-            if destination is None:
-                return {"status": "cancelled"}
+            destination = self._available_destination(safe_filename)
 
             refreshed = None
             try:
@@ -278,7 +261,6 @@ class DesktopApi:
                     raise RuntimeError("Sua sessão expirou. Entre novamente no sistema.") from error
                 content = self._request_report(report_url, refreshed["access"])
 
-            destination.parent.mkdir(parents=True, exist_ok=True)
             temporary = destination.with_name(f".{destination.name}.tmp")
             temporary.write_bytes(content)
             os.replace(temporary, destination)
@@ -343,7 +325,7 @@ def main():
         import webview
 
         desktop_api = DesktopApi(app_url)
-        window = webview.create_window(
+        webview.create_window(
             "FP Estoque — Depósito de Bebidas",
             app_url,
             js_api=desktop_api,
@@ -354,7 +336,6 @@ def main():
             text_select=True,
             confirm_close=False,
         )
-        desktop_api.bind_window(window)
         webview.start(
             gui="edgechromium",
             debug=os.getenv("DEBUG", "false").lower() == "true",
