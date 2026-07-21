@@ -1,4 +1,4 @@
 -r requirements.txt
 waitress>=3.0,<4
-pywebview>=5.0,<7
+pywebview==6.2.1
 pyinstaller>=6.0,<7
