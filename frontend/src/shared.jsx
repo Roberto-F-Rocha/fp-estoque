@@ -12,6 +12,79 @@ import {
 } from "recharts";
 import "./styles.css";
 
+const FIELD_LABELS_PT = {
+  active: "Situação",
+  address: "Endereço",
+  address_number: "Número",
+  barcode: "Código de barras",
+  brand: "Marca",
+  category: "Categoria",
+  city: "Cidade",
+  code: "Código",
+  contact_name: "Nome do responsável",
+  corporate_name: "Razão social",
+  cost_price: "Preço de custo",
+  cpf: "CPF",
+  description: "Descrição",
+  district: "Bairro",
+  document: "CNPJ ou CPF",
+  email: "E-mail",
+  end_date: "Data final",
+  format: "Formato",
+  full_name: "Nome completo",
+  image_url: "Imagem",
+  location: "Localização",
+  lot: "Lote",
+  maximum_stock: "Estoque máximo",
+  minimum_stock: "Estoque mínimo",
+  name: "Nome",
+  notes: "Observações",
+  package_quantity: "Quantidade por embalagem",
+  package_type: "Tipo de embalagem",
+  password: "Senha",
+  password_confirmation: "Confirmação da senha",
+  phone: "Telefone",
+  product: "Produto",
+  role: "Perfil",
+  sale_price: "Preço de venda",
+  sku: "SKU",
+  start_date: "Data inicial",
+  state: "Estado (UF)",
+  state_registration: "Inscrição estadual",
+  supplier: "Fornecedor",
+  unit: "Unidade",
+  username: "Nome de usuário",
+  volume: "Volume",
+  volume_unit: "Unidade do volume",
+  whatsapp: "WhatsApp",
+};
+
+const STATUS_LABELS_PT = {
+  ACTIVE: "Ativo",
+  AVAILABLE: "Disponível",
+  CANCELLED: "Cancelado",
+  CANCELED: "Cancelado",
+  CONFIRMED: "Confirmado",
+  CRITICAL: "Crítico",
+  DONE: "Concluído",
+  DRAFT: "Rascunho",
+  EMPTY: "Esgotado",
+  EXPIRED: "Vencido",
+  FAILED: "Falhou",
+  FILE_MISSING: "Arquivo não encontrado",
+  INACTIVE: "Inativo",
+  INFO: "Informativo",
+  LOW: "Estoque baixo",
+  NORMAL: "Normal",
+  OPEN: "Aberto",
+  OUT: "Sem estoque",
+  PROCESSING: "Processando",
+  REQUESTED: "Solicitado",
+  SUCCESS: "Concluído",
+  WAITING: "Aguardando",
+  WARNING: "Atenção",
+};
+
 function resolveApiBase() {
   const detected = `${window.location.protocol}//${window.location.hostname}:8000/api/`;
   const configured = String(import.meta.env.VITE_API_URL || "").trim();
@@ -77,6 +150,8 @@ export const fmtMoney = (value) => Number(value || 0).toLocaleString("pt-BR", { 
 export const fmtQty = (value) => Number(value || 0).toLocaleString("pt-BR", { maximumFractionDigits: 3 });
 export const fmtDate = (value, withTime = true) => value ? new Date(value).toLocaleString("pt-BR", withTime ? {} : { dateStyle: "short" }) : "-";
 export const today = () => new Date().toISOString().slice(0, 10);
+export const translateStatus = (value) => STATUS_LABELS_PT[String(value || "").toUpperCase()] || value;
+export const translateField = (value) => FIELD_LABELS_PT[value] || String(value || "").replaceAll("_", " ");
 
 export function getError(error) {
   const data = error?.response?.data;
@@ -86,7 +161,7 @@ export function getError(error) {
   if (data.detail) return Array.isArray(data.detail) ? data.detail.join(" ") : String(data.detail);
   return Object.entries(data)
     .filter(([key]) => key !== "status_code")
-    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(" ") : value}`)
+    .map(([key, value]) => `${translateField(key)}: ${Array.isArray(value) ? value.join(" ") : value}`)
     .join(" • ");
 }
 
@@ -139,14 +214,14 @@ export function DataTable({ columns, rows, loading, emptyText, rowKey = "id" }) 
 
 export function StatusBadge({ value, label }) {
   const normalized = String(value || "").toLowerCase();
-  const tone = normalized.includes("confirm") || normalized.includes("done") || normalized === "active" || normalized === "normal"
+  const tone = normalized.includes("confirm") || normalized.includes("done") || normalized.includes("success") || normalized === "active" || normalized === "normal" || normalized === "available"
     ? "success"
-    : normalized.includes("cancel") || normalized.includes("expired") || normalized.includes("out") || normalized.includes("critical")
+    : normalized.includes("cancel") || normalized.includes("fail") || normalized.includes("expired") || normalized.includes("out") || normalized.includes("critical") || normalized.includes("missing")
       ? "danger"
-      : normalized.includes("draft") || normalized.includes("open") || normalized.includes("waiting") || normalized.includes("warning") || normalized.includes("low")
+      : normalized.includes("draft") || normalized.includes("open") || normalized.includes("processing") || normalized.includes("requested") || normalized.includes("waiting") || normalized.includes("warning") || normalized.includes("low")
         ? "warning"
         : "neutral";
-  return <span className={`badge badge-${tone}`}>{label || value}</span>;
+  return <span className={`badge badge-${tone}`}>{label || translateStatus(value)}</span>;
 }
 
 export {
