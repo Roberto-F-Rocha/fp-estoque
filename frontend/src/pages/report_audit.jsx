@@ -19,6 +19,7 @@ import {
 import { MetricCard, PageHeader } from "../layout.jsx";
 
 const PAGE_SIZE = 20;
+const EMPTY_FILTERS = { search: "", status: "", format: "" };
 
 function filterSummary(filters) {
   if (!filters || typeof filters !== "object") return "Sem filtros adicionais";
@@ -49,6 +50,13 @@ function fileSize(value) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function statusTone(status) {
+  if (status === "SUCCESS") return "done";
+  if (status === "FAILED" || status === "FILE_MISSING") return "cancelled";
+  if (status === "REQUESTED" || status === "PROCESSING") return "waiting";
+  return status;
+}
+
 export function ReportAuditPage({ notify }) {
   const [rows, setRows] = useState([]);
   const [summary, setSummary] = useState({ total: 0, success: 0, failed: 0, pdf: 0, xlsx: 0 });
@@ -56,18 +64,18 @@ export function ReportAuditPage({ notify }) {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [opening, setOpening] = useState(null);
-  const [filters, setFilters] = useState({ search: "", status: "", format: "" });
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
 
-  async function load(targetPage = page) {
+  async function load(targetPage = page, appliedFilters = filters) {
     setLoading(true);
     try {
       const response = await api.get("reports/history/", {
         params: {
           page: targetPage,
           page_size: PAGE_SIZE,
-          search: filters.search,
-          status: filters.status,
-          format: filters.format,
+          search: appliedFilters.search,
+          status: appliedFilters.status,
+          format: appliedFilters.format,
         },
       });
       setRows(response.data.results || []);
@@ -82,7 +90,7 @@ export function ReportAuditPage({ notify }) {
   }
 
   useEffect(() => {
-    load(1);
+    load(1, EMPTY_FILTERS);
   }, []);
 
   async function openFile(record) {
@@ -90,7 +98,7 @@ export function ReportAuditPage({ notify }) {
     try {
       const response = await api.post(`reports/history/${record.id}/open/`);
       notify(response.data.detail || "Arquivo aberto no aplicativo padrão.");
-      await load(page);
+      await load(page, filters);
     } catch (error) {
       notify(getError(error), "error");
     } finally {
@@ -101,14 +109,13 @@ export function ReportAuditPage({ notify }) {
   function applyFilters(event) {
     event.preventDefault();
     setPage(1);
-    load(1);
+    load(1, filters);
   }
 
   function clearFilters() {
-    const clean = { search: "", status: "", format: "" };
-    setFilters(clean);
+    setFilters(EMPTY_FILTERS);
     setPage(1);
-    window.setTimeout(() => load(1), 0);
+    load(1, EMPTY_FILTERS);
   }
 
   const columns = [
@@ -131,7 +138,7 @@ export function ReportAuditPage({ notify }) {
     {
       key: "status",
       label: "Situação",
-      render: (row) => <StatusBadge value={row.status} label={row.status_label} />,
+      render: (row) => <StatusBadge value={statusTone(row.status)} label={row.status_label} />,
     },
     {
       key: "filters",
@@ -176,7 +183,7 @@ export function ReportAuditPage({ notify }) {
     <>
       <PageHeader
         actions={
-          <Button variant="secondary" icon={RefreshCw} onClick={() => load(page)} disabled={loading}>
+          <Button variant="secondary" icon={RefreshCw} onClick={() => load(page, filters)} disabled={loading}>
             Atualizar histórico
           </Button>
         }
@@ -237,7 +244,7 @@ export function ReportAuditPage({ notify }) {
           page={page}
           count={count}
           pageSize={PAGE_SIZE}
-          onChange={(nextPage) => load(nextPage)}
+          onChange={(nextPage) => load(nextPage, filters)}
         />
       </section>
     </>
