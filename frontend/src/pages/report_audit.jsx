@@ -128,7 +128,7 @@ export function ReportAuditPage({ notify }) {
     {
       key: "report_name",
       label: "Relatório",
-      render: (row) => <div className="audit-report-name"><strong>{row.report_name}</strong><small>{row.report_type}</small></div>,
+      render: (row) => <div className="audit-report-name"><strong>{row.report_name}</strong></div>,
     },
     {
       key: "format",
